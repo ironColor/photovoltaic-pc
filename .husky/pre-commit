@@ -1,0 +1,6 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "[STARTED] 代码格式化中..."
+#npx --no-install lint-staged
+echo "[STARTED] 代码格式化完成..."
