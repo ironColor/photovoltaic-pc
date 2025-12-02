@@ -11,6 +11,9 @@ export default function AddOrder( ) {
       <Col flex='550px'>
         <Map styles={{ height: '600px' }} complete={setComplete} ref={mapRef} />
       </Col>
+      <Col flex='auto'>
+        <h1>新增工单</h1>
+      </Col>
     </Row>
   )
 }
