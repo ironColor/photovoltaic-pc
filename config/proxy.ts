@@ -17,7 +17,7 @@ export default {
   dev: {
     '/api/': {
       // target: 'http://192.168.1.99:18080',
-      target: 'http://192.168.1.27:8080',
+      target: 'http://59.110.53.181:18080',
       changeOrigin: true,
       pathRewrite: { '^/api': '' }
     }

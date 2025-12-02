@@ -136,6 +136,16 @@ export default [
         name: '参数管理',
         path: '/device/params',
         component: './Device/Params'
+      },
+      {
+        name: '机组配置',
+        path: '/device/group',
+        component: './Device/Crew'
+      },
+      {
+        name: '新增工单',
+        path: '/device/add',
+        component: './Device/Add'
       }
     ]
   },

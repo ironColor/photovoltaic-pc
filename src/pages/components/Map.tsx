@@ -42,7 +42,7 @@ const Map: React.ForwardRefRenderFunction<
 
   const home = (regionArr: any, landName?: number) => {
     map.current.clearMap();
-
+    console.log('xxxx', regionArr, landName);
     regionArr?.map((item: any) => {
       const polygonPath = item?.landPoints?.map((point: any) => {
         const result = gcoord.transform([point.lon, point.lat], gcoord.WGS84, gcoord.GCJ02);

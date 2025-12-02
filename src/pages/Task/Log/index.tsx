@@ -16,8 +16,8 @@ const Log: React.FC = () => {
 
   useEffect(() => {
     id && cruise(id).then(res => setData(res.data));
-
-    complete && mapRef.current?.log(data?.[0].planInfos);
+    console.log(data);
+    complete && mapRef.current?.log(data?.[0]?.planInfos);
   }, [id, complete]);
 
   const columns: ProColumns<any>[] = [
