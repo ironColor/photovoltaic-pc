@@ -1,0 +1,184 @@
+import React, { useRef } from 'react';
+import { Button, Divider, message, Popconfirm, Row, Space, Table } from 'antd';
+import { ProColumns, ProTable } from '@ant-design/pro-components';
+import { history } from '@@/core/history';
+import { del, page } from './service';
+import { PlusOutlined } from '@ant-design/icons';
+
+const WorkOrder: React.FC = () => {
+  const formRef = useRef<any>();
+
+
+  const columns: ProColumns<Land.Item>[] = [
+    {
+      title: '工单名称',
+      dataIndex: 'parentTaskName',
+      width: 270,
+      ellipsis: true
+    },
+    {
+      title: '工单机组',
+      dataIndex: 'areaName',
+      width: 270,
+      ellipsis: true,
+      search: false
+    },
+    {
+      title: '工单地块',
+      dataIndex: 'taskId',
+      ellipsis: true,
+      search: false
+    },
+    {
+      title: '创建时间',
+      dataIndex: 'createTime',
+      width: 170,
+      search: false
+    },
+    {
+      title: '操作',
+      width: 170,
+      search: false,
+      render: (text: any) => {
+        return (
+          <>
+            <a
+              onClick={() => {
+                history.push({
+                  pathname: `/task/design/add`,
+                  search: `?id=${encodeURIComponent(text?.parentTaskId)}`
+                });
+              }}
+            >
+              编辑
+            </a>
+            <Divider type='vertical' />
+            <a
+              onClick={() => {
+                history.push({
+                  pathname: `/task/workOrder/execute`,
+                  search: `?id=${encodeURIComponent(text?.parentTaskId)}`
+                });
+              }}
+            >
+              执行
+            </a>
+            <Divider type='vertical' />
+            <Popconfirm
+              title='确认删除?'
+              okText='确认'
+              cancelText='取消'
+              onConfirm={async () => {
+                const { code, msg } = await del([text.parentTaskId]);
+                if (code === 0) {
+                  message.success('删除成功');
+                  formRef.current?.reload();
+                } else {
+                  message.error(msg || '删除失败');
+                }
+              }}
+            >
+              <span style={{ color: '#1677ff' }}>删除</span>
+            </Popconfirm>
+          </>
+        );
+      }
+    }
+  ];
+
+  const speak = () => {
+    // 创建语音实例
+    const utterance = new SpeechSynthesisUtterance('设置语音参数');
+
+    // 可选：设置语音参数
+    utterance.lang = 'zh-CN';        // 语言
+    utterance.rate = 1;              // 语速 (0.1 ~ 10，默认 1)
+    utterance.pitch = 1;             // 音调 (0 ~ 2，默认 1)
+    utterance.volume = 1;            // 音量 (0 ~ 1)
+
+    // 播报
+    window.speechSynthesis.speak(utterance);
+  };
+
+
+  return (
+    <Row gutter={16}>
+      <ProTable<Land.Item>
+        columns={columns}
+        actionRef={formRef}
+        headerTitle={<b>工单管理</b>}
+        cardBordered={true}
+        rowKey='parentTaskId'
+        search={{
+          labelWidth: 'auto'
+        }}
+        pagination={{
+          showSizeChanger: false,
+          showQuickJumper: true,
+          defaultPageSize: 10
+        }}
+        request={async params => {
+          const {
+            data: { records, total },
+            code
+          } = await page(params);
+
+          return { data: records, success: !code, total: total };
+        }}
+        dateFormatter='string'
+        toolBarRender={() => [
+          <Button
+            key='button'
+            icon={<PlusOutlined />}
+            onClick={() => history.push('/task/workOrder/add')}
+            type='primary'
+          >
+            新增
+          </Button>
+        ]}
+        rowSelection={{
+          // https://ant.design/components/table-cn/#components-table-demo-row-selection-custom
+          selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT]
+        }}
+        tableAlertRender={({ selectedRowKeys, onCleanSelected }) => {
+          return (
+            <Space size={24}>
+              <span>
+                已选 {selectedRowKeys.length} 项
+                <a style={{ marginInlineStart: 8 }} onClick={onCleanSelected}>
+                  取消选择
+                </a>
+              </span>
+            </Space>
+          );
+        }}
+        tableAlertOptionRender={({ selectedRows }) => {
+          return (
+            <Space size={16}>
+              <Popconfirm
+                title='确认删除?'
+                okText='确认'
+                cancelText='取消'
+                onConfirm={async () => {
+                  const { code, msg } = await del(
+                    selectedRows.map((item: any) => item.parentTaskId)
+                  );
+                  if (code === 0) {
+                    message.success('删除成功');
+                    formRef.current?.reload();
+                  } else {
+                    message.error(msg || '删除失败');
+                  }
+                }}
+              >
+                <span style={{ color: '#1677ff' }}>批量删除</span>
+              </Popconfirm>
+            </Space>
+          );
+        }}
+      />
+    </Row>
+  )
+}
+
+export default WorkOrder;

@@ -15,7 +15,7 @@ export default function Crew() {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true); // 是否还有更多数据
 
-  const loadData = async (pages) => {
+  const loadData = async (pages: any) => {
     if (loading || !hasMore) return;
     setLoading(true);
     try {
@@ -24,7 +24,7 @@ export default function Crew() {
         data: { records, total },
       } = info;
 
-      const format = records.map((record) => ({
+      const format = records.map((record: any) => ({
         ...record,
         label: record.robotCode,
         value: record.robotId,
@@ -45,7 +45,7 @@ export default function Crew() {
   };
 
   // 监听下拉滚动
-  const handlePopupScroll = (e) => {
+  const handlePopupScroll = (e: any) => {
     const { target } = e;
     // 判断是否滚动到底部（允许一点误差）
     if (target.scrollHeight - target.scrollTop <= target.clientHeight + 10) {
@@ -55,11 +55,12 @@ export default function Crew() {
     }
   };
 
-  const onFinish = (value) => {
-    console.log(value);
+  const onFinish = (value: any) => {
+    console.log(value, '22xxx');
   }
 
-  const onFinishFailed = (errorInfo) => {
+  const onFinishFailed = (errorInfo: any) => {
+    console.log(name);
     console.log(errorInfo);
   };
 
@@ -85,35 +86,34 @@ export default function Crew() {
         form={form}
       >
         <Form.Item label='机组名称' rules={[{ required: true, message: '请输入机组名称' }]} name="name">
-          <Input value={name} onChange={(e) => setName(e.target.value)} />
+          <Input />
         </Form.Item>
         <Form.Item label='无人机编号' rules={[{ required: true, message: '请输入无人机编号' }]} name="id">
-          <Input value={id} onChange={(e) => setId(e.target.value)} />
+          <Input value={id} />
         </Form.Item>
-        <Form.Item
-          name="robotList"
-          noStyle
-          rules={[
-            {
-              validator: (_, value) => {
-                if (!value || value.length === 0) {
-                  return Promise.reject(new Error('请至少添加一个机器人'));
-                }
-                return Promise.resolve();
-              },
-            },
-          ]}
-        >
-          {/* 不渲染任何 UI，仅用于校验 */}
-          <input type="hidden" />
-        </Form.Item>
+        {/*<Form.Item*/}
+        {/*  name="robotList"*/}
+        {/*  noStyle*/}
+        {/*  rules={[*/}
+        {/*    {*/}
+        {/*      validator: (_, value) => {*/}
+        {/*        if (!value || value.length === 0) {*/}
+        {/*          return Promise.reject(new Error('请至少添加一个机器人'));*/}
+        {/*        }*/}
+        {/*        return Promise.resolve();*/}
+        {/*      },*/}
+        {/*    },*/}
+        {/*  ]}*/}
+        {/*>*/}
+        {/*  /!* 不渲染任何 UI，仅用于校验 *!/*/}
+        {/*  <input type="hidden" />*/}
+        {/*</Form.Item>*/}
         <Form.Item
           label="机器人列表"
           name="list"
           rules={[
             {
               validator: (_, value) => {
-                console.log(222, value);
                 if (!value || value.length === 0) {
                   return Promise.reject(new Error('请至少添加一个机器人'));
                 }
@@ -123,10 +123,8 @@ export default function Crew() {
           ]}
         >
           <Select
-            value={value}
             mode="multiple"
             options={list}
-            onChange={(value) => setValue(value)}
             onPopupScroll={handlePopupScroll}
             loading={loading}
             showSearch={false} // 如果不需要搜索可关闭
@@ -137,7 +135,7 @@ export default function Crew() {
           <Button type="primary" htmlType="submit">
             确定
           </Button>
-          <Button htmlType="button" style={{ marginLeft: 8 }}>
+          <Button htmlType="button" style={{ marginLeft: 8 }} onClick={() => form.resetFields()}>
             取消
           </Button>
         </Form.Item>

@@ -210,7 +210,7 @@ const Execute: React.FC = () => {
         parentLogId: data[0]?.parentLogId,
         childLogId: data[0]?.childLogId
       };
-
+      console.log(1111, data);
       setTimeline(
         data.map((item: any, index: number) => {
           // 为了实现投放（2）、转移任务（4）执行“清扫任务”单独实现需求

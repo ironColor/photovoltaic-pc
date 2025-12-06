@@ -41,26 +41,27 @@ const Map: React.ForwardRefRenderFunction<
   };
 
   const home = (regionArr: any, landName?: number) => {
-    map.current.clearMap();
-    console.log('xxxx', regionArr, landName);
-    regionArr?.map((item: any) => {
-      const polygonPath = item?.landPoints?.map((point: any) => {
-        const result = gcoord.transform([point.lon, point.lat], gcoord.WGS84, gcoord.GCJ02);
-        return new AMap.current.LngLat(result[0], result[1]);
+    if (map.current) {
+      map.current.clearMap();
+      regionArr?.map((item: any) => {
+        const polygonPath = item?.landPoints?.map((point: any) => {
+          const result = gcoord.transform([point.lon, point.lat], gcoord.WGS84, gcoord.GCJ02);
+          return new AMap.current.LngLat(result[0], result[1]);
+        });
+
+        const polygon = new AMap.current.Polygon({
+          path: polygonPath,
+          strokeOpacity: 0,
+          fillColor:
+            landName === undefined ? '#00B2D5' : item.landName === landName ? '#00B2D5' : '#aaaaaa'
+        });
+
+        map.current.add(polygon);
       });
 
-      const polygon = new AMap.current.Polygon({
-        path: polygonPath,
-        strokeOpacity: 0,
-        fillColor:
-          landName === undefined ? '#00B2D5' : item.landName === landName ? '#00B2D5' : '#aaaaaa'
-      });
-
-      map.current.add(polygon);
-    });
-
-    // 自自适应所有覆盖物
-    map.current.setFitView(null, false, [60, 60, 100, 60], 19);
+      // 自自适应所有覆盖物
+      map.current.setFitView(null, false, [60, 60, 100, 60], 19);
+    }
   };
 
   /**

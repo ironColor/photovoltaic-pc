@@ -110,6 +110,28 @@ export default [
         name: '子任务',
         path: '/task/subtask',
         component: './Task/Subtask'
+      },
+      {
+        name: '工单管理',
+        path: '/task/workOrder',
+        routes: [
+          {
+            path: '/task/workOrder',
+            redirect: '/task/workOrder/list'
+          },
+          {
+            path: '/task/workOrder/list',
+            component: './Task/WorkOrder'
+          },
+          {
+            path: '/task/workOrder/add',
+            component: './Task/WorkOrder/AddWorkOrder'
+          },
+          {
+            path: '/task/workOrder/execute',
+            component: './Task/WorkOrder/ExecuteWork'
+          }
+        ]
       }
     ]
   },
@@ -141,11 +163,6 @@ export default [
         name: '机组配置',
         path: '/device/group',
         component: './Device/Crew'
-      },
-      {
-        name: '新增工单',
-        path: '/device/add',
-        component: './Device/Add'
       }
     ]
   },
