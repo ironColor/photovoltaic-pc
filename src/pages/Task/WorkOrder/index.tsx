@@ -86,21 +86,6 @@ const WorkOrder: React.FC = () => {
     }
   ];
 
-  const speak = () => {
-    // 创建语音实例
-    const utterance = new SpeechSynthesisUtterance('设置语音参数');
-
-    // 可选：设置语音参数
-    utterance.lang = 'zh-CN';        // 语言
-    utterance.rate = 1;              // 语速 (0.1 ~ 10，默认 1)
-    utterance.pitch = 1;             // 音调 (0 ~ 2，默认 1)
-    utterance.volume = 1;            // 音量 (0 ~ 1)
-
-    // 播报
-    window.speechSynthesis.speak(utterance);
-  };
-
-
   return (
     <Row gutter={16}>
       <ProTable<Land.Item>
