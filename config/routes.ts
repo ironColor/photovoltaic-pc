@@ -160,6 +160,11 @@ export default [
         component: './Device/Params'
       },
       {
+        name: '轨迹点',
+        path: '/device/trackPoint',
+        component: './Device/TrackPoint'
+      },
+      {
         name: '机组配置',
         path: '/device/group',
         component: './Device/Crew'

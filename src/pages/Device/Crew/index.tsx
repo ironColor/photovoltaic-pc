@@ -1,7 +1,10 @@
-import { Button, Form, Input, Select } from 'antd';
-import { useEffect, useState } from 'react';
+import { Button, Divider, Form, Input, message, Modal, Popconfirm, Select, Space, Table } from 'antd';
+import React, { useEffect, useRef, useState } from 'react';
 import s from './index.module.less'
 import { page } from '@/pages/Device/Crew/service';
+import { ProColumns, ProTable } from '@ant-design/pro-components';
+import { del, detail } from '@/pages/Device/Machine/service';
+import { PlusOutlined } from '@ant-design/icons';
 
 export default function Crew() {
   const [form] = Form.useForm();
@@ -14,6 +17,75 @@ export default function Crew() {
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true); // 是否还有更多数据
+  const [open, setOpen] = useState(false);
+  const [data, setData] = useState({});
+  const tableFormRef = useRef<any>();
+
+  const columns: ProColumns[] = [
+    {
+      title: '编号',
+      dataIndex: 'robotCode',
+      width: 270,
+      ellipsis: true
+    },
+    {
+      title: 'RTK',
+      dataIndex: 'rtkCode',
+      ellipsis: true
+    },
+    {
+      title: '备注',
+      dataIndex: 'remarks',
+      search: false,
+      ellipsis: true
+    },
+    {
+      title: '创建时间',
+      dataIndex: 'createTime',
+      search: false
+    },
+    {
+      title: '操作',
+      width: 170,
+      search: false,
+      render: (text: any) => {
+        return (
+          <>
+            <a
+              onClick={async () => {
+                const { data, code, msg } = await detail(text.robotId);
+                setOpen(true);
+                if (code === 0) {
+                  setData(data);
+                } else {
+                  message.error(msg || '加载失败');
+                }
+              }}
+            >
+              编辑
+            </a>
+            <Divider type='vertical' />
+            <Popconfirm
+              title='确认删除?'
+              okText='确认'
+              cancelText='取消'
+              onConfirm={async () => {
+                const { code, msg } = await del([text.robotId]);
+                if (code === 0) {
+                  message.success('删除成功');
+                  // formRef.current?.reload();
+                } else {
+                  message.error(msg || '删除失败');
+                }
+              }}
+            >
+              <span style={{ color: '#1677ff' }}>删除</span>
+            </Popconfirm>
+          </>
+        );
+      }
+    }
+  ];
 
   const loadData = async (pages: any) => {
     if (loading || !hasMore) return;
@@ -75,71 +147,136 @@ export default function Crew() {
   }, [value, form]);
 
   return (
-    <div className={s.content}>
-      <h1>机组配置</h1>
-      <Form
-        labelCol={{ span: 8 }}
-        wrapperCol={{ span: 16 }}
-        style={{ maxWidth: 600 }}
-        onFinish={onFinish}
-        onFinishFailed={onFinishFailed}
-        form={form}
+    <div>
+      <ProTable
+        columns={columns}
+        actionRef={tableFormRef}
+        headerTitle={<b>机组列表</b>}
+        style={{ position: 'absolute' }}
+        cardBordered={true}
+        request={async params => {
+          console.log('ssss',params)
+          const {
+            data: { records, total },
+            code
+          } = await page(params);
+          console.log(records, total);
+          return { data: records, success: !code, total: total };
+        }}
+        rowKey='robotId'
+        search={{ labelWidth: 'auto' }}
+        dateFormatter='string'
+        pagination={{
+          showQuickJumper: true,
+          defaultPageSize: 10
+        }}
+        toolBarRender={() => [
+          <Button
+            key='button'
+            icon={<PlusOutlined />}
+            onClick={() => {
+              setOpen(true);
+            }}
+            type='primary'
+          >
+            新增
+          </Button>
+        ]}
+        rowSelection={{
+          // https://ant.design/components/table-cn/#components-table-demo-row-selection-custom
+          selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT]
+        }}
+        tableAlertRender={({ selectedRowKeys, onCleanSelected }) => {
+          return (
+            <Space size={24}>
+              <span>
+                已选 {selectedRowKeys.length} 项
+                <a style={{ marginInlineStart: 8 }} onClick={onCleanSelected}>
+                  取消选择
+                </a>
+              </span>
+            </Space>
+          );
+        }}
+        tableAlertOptionRender={({ selectedRows }) => {
+          return (
+            <Space size={16}>
+              <Popconfirm
+                title='确认删除?'
+                okText='确认'
+                cancelText='取消'
+                onConfirm={async () => {
+                  const { code, msg } = await del(selectedRows.map((item: any) => item.robotId));
+                  if (code === 0) {
+                    message.success('删除成功');
+                    tableFormRef.current?.reload();
+                  } else {
+                    message.error(msg || '删除失败');
+                  }
+                }}
+              >
+                <span style={{ color: '#1677ff' }}>批量删除</span>
+              </Popconfirm>
+            </Space>
+          );
+        }}
+      />
+
+
+      <Modal
+        title="新增机组"
+        open={open}
+        onCancel={() => setOpen(false)}
+        footer={null}
+        destroyOnHidden
       >
-        <Form.Item label='机组名称' rules={[{ required: true, message: '请输入机组名称' }]} name="name">
-          <Input />
-        </Form.Item>
-        <Form.Item label='无人机编号' rules={[{ required: true, message: '请输入无人机编号' }]} name="id">
-          <Input value={id} />
-        </Form.Item>
-        {/*<Form.Item*/}
-        {/*  name="robotList"*/}
-        {/*  noStyle*/}
-        {/*  rules={[*/}
-        {/*    {*/}
-        {/*      validator: (_, value) => {*/}
-        {/*        if (!value || value.length === 0) {*/}
-        {/*          return Promise.reject(new Error('请至少添加一个机器人'));*/}
-        {/*        }*/}
-        {/*        return Promise.resolve();*/}
-        {/*      },*/}
-        {/*    },*/}
-        {/*  ]}*/}
-        {/*>*/}
-        {/*  /!* 不渲染任何 UI，仅用于校验 *!/*/}
-        {/*  <input type="hidden" />*/}
-        {/*</Form.Item>*/}
-        <Form.Item
-          label="机器人列表"
-          name="list"
-          rules={[
-            {
-              validator: (_, value) => {
-                if (!value || value.length === 0) {
-                  return Promise.reject(new Error('请至少添加一个机器人'));
-                }
-                return Promise.resolve();
-              },
-            },
-          ]}
+        <Form
+          labelCol={{ span: 8 }}
+          wrapperCol={{ span: 16 }}
+          style={{ maxWidth: 600 }}
+          onFinish={onFinish}
+          onFinishFailed={onFinishFailed}
+          form={form}
         >
-          <Select
-            mode="multiple"
-            options={list}
-            onPopupScroll={handlePopupScroll}
-            loading={loading}
-            showSearch={false} // 如果不需要搜索可关闭
-            placeholder="请选择机器人..."
-          />
-        </Form.Item>
-        <Form.Item label={null}>
-          <Button type="primary" htmlType="submit">
-            确定
-          </Button>
-          <Button htmlType="button" style={{ marginLeft: 8 }} onClick={() => form.resetFields()}>
-            取消
-          </Button>
-        </Form.Item>
-      </Form>
+          <Form.Item label='机组名称' rules={[{ required: true, message: '请输入机组名称' }]} name="name">
+            <Input />
+          </Form.Item>
+          <Form.Item label='无人机编号' rules={[{ required: true, message: '请输入无人机编号' }]} name="id">
+            <Input value={id} />
+          </Form.Item>
+          <Form.Item
+            label="机器人列表"
+            name="list"
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (!value || value.length === 0) {
+                    return Promise.reject(new Error('请至少添加一个机器人'));
+                  }
+                  return Promise.resolve();
+                },
+              },
+            ]}
+          >
+            <Select
+              mode="multiple"
+              options={list}
+              onPopupScroll={handlePopupScroll}
+              loading={loading}
+              showSearch={false} // 如果不需要搜索可关闭
+              placeholder="请选择机器人..."
+            />
+          </Form.Item>
+          <Form.Item label={null}>
+            <Button type="primary" htmlType="submit">
+              确定
+            </Button>
+            <Button htmlType="button" style={{ marginLeft: 8 }} onClick={() => form.resetFields()}>
+              取消
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }
