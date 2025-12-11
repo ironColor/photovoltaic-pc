@@ -1,43 +1,43 @@
 import { Button, Divider, Form, Input, message, Modal, Popconfirm, Select, Space, Table } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
-import s from './index.module.less'
-import { page } from '@/pages/Device/Crew/service';
+import { delGroup, detailInfo, page, robotPage, saveInfo, update } from '@/pages/Device/Crew/service';
 import { ProColumns, ProTable } from '@ant-design/pro-components';
-import { del, detail } from '@/pages/Device/Machine/service';
 import { PlusOutlined } from '@ant-design/icons';
 
 export default function Crew() {
   const [form] = Form.useForm();
-  const [name, setName] = useState<string>();
-  const [id, setId] = useState<string>();
-  const [ value, setValue] = useState<any[]>([
-  ]);
   const [ list, setList] = useState<any[]>([
   ]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true); // 是否还有更多数据
   const [open, setOpen] = useState(false);
-  const [data, setData] = useState({});
   const tableFormRef = useRef<any>();
+  const [updateId, setUpdateId] = useState<null | number>();
 
   const columns: ProColumns[] = [
     {
-      title: '编号',
-      dataIndex: 'robotCode',
+      title: '机组名',
+      dataIndex: 'name',
       width: 270,
       ellipsis: true
     },
     {
-      title: 'RTK',
-      dataIndex: 'rtkCode',
+      title: '无人机编号',
+      dataIndex: 'uavCode',
       ellipsis: true
     },
     {
-      title: '备注',
-      dataIndex: 'remarks',
+      title: '机器人列表',
       search: false,
-      ellipsis: true
+      ellipsis: true,
+      render: (_: any, data) => {
+        return (
+          <>
+            {data.robots?.map(item => item.robotCode).join(',')}
+          </>
+        )
+      }
     },
     {
       title: '创建时间',
@@ -53,10 +53,15 @@ export default function Crew() {
           <>
             <a
               onClick={async () => {
-                const { data, code, msg } = await detail(text.robotId);
+                const { data, code, msg } = await detailInfo(text.id);
                 setOpen(true);
                 if (code === 0) {
-                  setData(data);
+                  form.setFieldsValue({
+                    name: data.name,
+                    uavCode: data.uavCode,
+                    robotIds: data.robots.map(item => item.robotId)
+                  })
+                  setUpdateId(data.id)
                 } else {
                   message.error(msg || '加载失败');
                 }
@@ -70,16 +75,16 @@ export default function Crew() {
               okText='确认'
               cancelText='取消'
               onConfirm={async () => {
-                const { code, msg } = await del([text.robotId]);
+                const { code, msg } = await delGroup([text.id]);
                 if (code === 0) {
                   message.success('删除成功');
-                  // formRef.current?.reload();
+                  tableFormRef.current?.reload();
                 } else {
                   message.error(msg || '删除失败');
                 }
               }}
             >
-              <span style={{ color: '#1677ff' }}>删除</span>
+              <span style={{ color: '#1677ff', cursor: 'pointer' }}>删除</span>
             </Popconfirm>
           </>
         );
@@ -91,7 +96,7 @@ export default function Crew() {
     if (loading || !hasMore) return;
     setLoading(true);
     try {
-      const info = await page({page: pages, pageSize: 10});
+      const info = await robotPage({page: pages, pageSize: 10});
       const {
         data: { records, total },
       } = info;
@@ -127,24 +132,24 @@ export default function Crew() {
     }
   };
 
-  const onFinish = (value: any) => {
-    console.log(value, '22xxx');
-  }
+  const onFinish = async (value: any) => {
+    const api = updateId ? update : saveInfo
 
-  const onFinishFailed = (errorInfo: any) => {
-    console.log(name);
-    console.log(errorInfo);
-  };
+    const info = await api({ ...value, id: updateId });
+    if (info.code === 0) {
+      setOpen(false);
+      message.success('提交成功');
+      tableFormRef.current?.reload();
+      setUpdateId(null)
+    } else {
+      message.error(info.msg || '提交失败');
+    }
+  }
 
   useEffect(() => {
     // form.setFieldsValue({ robotList: list });
-    loadData(1)
+    loadData(0)
   }, []);
-
-  useEffect(() => {
-    form.setFieldsValue({ robotList: value });
-    // loadData()
-  }, [value, form]);
 
   return (
     <div>
@@ -155,15 +160,18 @@ export default function Crew() {
         style={{ position: 'absolute' }}
         cardBordered={true}
         request={async params => {
-          console.log('ssss',params)
           const {
             data: { records, total },
             code
-          } = await page(params);
-          console.log(records, total);
+          } = await page({
+            pageNumber: params.current,
+            pageSize: params.pageSize,
+            name: params.name || '',
+            uavCode: params.uavCode || ''
+          });
           return { data: records, success: !code, total: total };
         }}
-        rowKey='robotId'
+        rowKey='id'
         search={{ labelWidth: 'auto' }}
         dateFormatter='string'
         pagination={{
@@ -206,7 +214,7 @@ export default function Crew() {
                 okText='确认'
                 cancelText='取消'
                 onConfirm={async () => {
-                  const { code, msg } = await del(selectedRows.map((item: any) => item.robotId));
+                  const { code, msg } = await delGroup(selectedRows.map((item: any) => item.id));
                   if (code === 0) {
                     message.success('删除成功');
                     tableFormRef.current?.reload();
@@ -235,19 +243,20 @@ export default function Crew() {
           wrapperCol={{ span: 16 }}
           style={{ maxWidth: 600 }}
           onFinish={onFinish}
-          onFinishFailed={onFinishFailed}
           form={form}
+          clearOnDestroy
         >
           <Form.Item label='机组名称' rules={[{ required: true, message: '请输入机组名称' }]} name="name">
             <Input />
           </Form.Item>
-          <Form.Item label='无人机编号' rules={[{ required: true, message: '请输入无人机编号' }]} name="id">
-            <Input value={id} />
+          <Form.Item label='无人机编号' rules={[{ required: true, message: '请输入无人机编号' }]} name="uavCode">
+            <Input />
           </Form.Item>
           <Form.Item
             label="机器人列表"
-            name="list"
+            name="robotIds"
             rules={[
+              { required: true, message: '请至少选择一个机器人' },
               {
                 validator: (_, value) => {
                   if (!value || value.length === 0) {
@@ -263,8 +272,8 @@ export default function Crew() {
               options={list}
               onPopupScroll={handlePopupScroll}
               loading={loading}
-              showSearch={false} // 如果不需要搜索可关闭
-              placeholder="请选择机器人..."
+              showSearch={false}
+              placeholder="请选择机器人"
             />
           </Form.Item>
           <Form.Item label={null}>
