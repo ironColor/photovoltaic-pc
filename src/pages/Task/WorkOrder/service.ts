@@ -1,7 +1,7 @@
 import { request } from '@umijs/max';
 
 export const page = async (params: object) => {
-  return request<API.R<{ records: Land.Item[]; total: number }>>('/ppc/ppcParentTask/page', {
+  return request<API.R<{ records: Land.Item[]; total: number }>>('/ppc/workOrder/page', {
     params: {
       ...params
     },
@@ -59,6 +59,18 @@ export const page2 = async (params: object) => {
 
 export const detailMock = async (params: number) => {
   return request<API.R<any>>(`/ppc/ppcLand/${params}`, {
+    method: 'GET'
+  });
+};
+
+export const tree = async () => {
+  return request<API.R<[]>>('/ppc/ppcArea/tree', {
+    method: 'GET'
+  });
+};
+
+export const getPointOptions = async (params: any) => {
+  return request<API.R<any>>(`/ppc/point/list/${params.areaId}/${params.type}`, {
     method: 'GET'
   });
 };

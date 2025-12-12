@@ -6,15 +6,21 @@ import { DragSortTable, ProTable } from '@ant-design/pro-components';
 import { land } from '@/pages/Base/service';
 import { landType } from '@/pages/components/Common';
 import { useSearchParams } from '@@/exports';
-import { detailMock } from '@/pages/Task/WorkOrder/service';
+import { detailMock, getPointOptions, tree } from '@/pages/Task/WorkOrder/service';
+import { isArray } from 'lodash';
 
 export default function AddWorkOrder( ) {
   const mapRef = useRef<any>();
   const [complete, setComplete] = useState(false);
   const [form] = Form.useForm();
   const [open, setOpen] = useState<boolean>(false);
-  const [data, setData] = useState<any[]>([]);
+  const [landData, setLandData] = useState<any[]>([]);
+  const [landOptions, setLandOptions] = useState<any[]>([])
   const [searchParams] = useSearchParams();
+  const [landId, setLandId] = useState<string>();
+  const [start, setStart] = useState<any[]>([]);
+  const [pull, setPull] = useState<any[]>([]);
+  const [unPull, setUnPull] = useState<any[]>([]);
 
 
   const handleColumns = useCallback((simple: boolean) => {
@@ -46,8 +52,8 @@ export default function AddWorkOrder( ) {
               key='delete'
               onClick={() => {
                 // 删除（过滤），并重新排序
-                setData(
-                  data
+                setLandData(
+                  landData
                     .filter(item => item.landId !== record.landId)
                     .map((item, index) => ({
                       ...item,
@@ -169,20 +175,20 @@ export default function AddWorkOrder( ) {
   }, [])
 
   const isSlopeTooLarge = (record: any) => {
-    return record.landHeight > 33; // 根据你的业务逻辑调整
+    return Math.abs(record.k) > 20;
   };
 
   const addLand = (newItems: any[]) => {
-    const existingIds = new Set(data.map(item => item.landId));
+    const existingIds = new Set(landData.map(item => item.landId));
     const uniqueNewItems = newItems.filter(item => !existingIds.has(item.landId)).map((item ,index) => ({
       ...item,
-      sort: index + data.length,
+      sort: index + landData.length,
     }));
-    setData(prev => [...prev, ...uniqueNewItems]);
+    setLandData(prev => [...prev, ...uniqueNewItems]);
   }
 
   const handleDragSortEnd = (_: number, __: number, newDataSource: any) => {
-    setData(
+    setLandData(
       newDataSource.map((item: any, index: number) => {
         return {
           ...item,
@@ -193,8 +199,27 @@ export default function AddWorkOrder( ) {
     message.success('修改列表排序成功');
   };
 
+  const handleLandNameChange = useCallback((value, option) => {
+    setLandId(option.areaId)
+
+  }, []);
 
   useEffect(() => {
+    tree().then((res) => {
+      const { code, msg, data } = res;
+      if (code !== 0) {
+        message.error(msg || '地块数据获取失败');
+        return;
+      }
+
+      const options = data.map((item: any) => ({
+        label: item.areaName,
+        value: item.areaId,
+        ...item
+      }))
+      setLandOptions(options)
+    })
+
     // Mock 工单修改
     const id = searchParams.get('id');
     if (!id) return;
@@ -209,16 +234,57 @@ export default function AddWorkOrder( ) {
         type: '干洗'
       })
       // 地块单独处理
-      setData([data])
+      // setData([data])
     });
   }, []);
 
   useEffect(() => {
-    mapRef.current.home(data)
+    mapRef.current.home(landData)
     form.setFieldsValue({
-      dataList: data
+      landIds: landData
     })
-  }, [data]);
+  }, [landData]);
+
+  useEffect(() => {
+    if (landId) {
+      getPointOptions({ areaId: landId, type: 10}).then(res => {
+        if (isArray(res)) {
+          const options = res.map(item => ({
+            label: item.pointName,
+            value: item.pointId,
+            ...item
+          }))
+          setStart(options)
+        } else {
+          message.error('下拉框数据获取失败');
+        }
+      })
+      getPointOptions({ areaId: landId, type: 7}).then(res => {
+        if (isArray(res)) {
+          const options = res.map(item => ({
+            label: item.pointName,
+            value: item.pointId,
+            ...item
+          }))
+          setPull(options)
+        } else {
+          message.error('下拉框数据获取失败');
+        }
+      })
+      getPointOptions({ areaId: landId, type: 8}).then(res => {
+        if (isArray(res)) {
+          const options = res.map(item => ({
+            label: item.pointName,
+            value: item.pointId,
+            ...item
+          }))
+          setUnPull(options)
+        } else {
+          message.error('下拉框数据获取失败');
+        }
+      })
+    }
+  }, [landId]);
 
   return (
     <Row gutter={32} style={{ background: '#fff'}}>
@@ -234,19 +300,27 @@ export default function AddWorkOrder( ) {
             style={{ maxWidth: 600 }}
             form={form}
           >
-            <Form.Item label='工单名称' rules={[{ required: true, message: '请输入机组名称' }]} name="name">
+            <Form.Item label='场地名称' rules={[{ required: true, message: '请选择场地名称' }]} name="areaId">
+              <Select
+                options={landOptions}
+                showSearch={false} // 如果不需要搜索可关闭
+                placeholder="请选择场地名称"
+                onChange={handleLandNameChange}
+              />
+            </Form.Item>
+            <Form.Item label='工单名称' rules={[{ required: true, message: '请输入机组名称' }]} name="orderName">
               <Input />
             </Form.Item>
-            <Form.Item label='工单类型' rules={[{ required: true, message: '请选择工单类型' }]} name="type">
+            <Form.Item label='工单类型' rules={[{ required: true, message: '请选择工单类型' }]} name="orderType">
               <Select
                 options={[
                   {
                     label: '干洗',
-                    value: '干洗'
+                    value: 1
                   },
                   {
                     label: '水洗',
-                    value: '水洗'
+                    value: 2
                   }
                 ]}
                 showSearch={false} // 如果不需要搜索可关闭
@@ -255,7 +329,7 @@ export default function AddWorkOrder( ) {
             </Form.Item>
             <Form.Item
               label="地块"
-              name="dataList"
+              name="landIds"
               rules={[
                 {
                   validator: (_, value) => {
@@ -270,7 +344,7 @@ export default function AddWorkOrder( ) {
               <DragSortTable
                 headerTitle={null}
                 columns={handleColumns(true)}
-                dataSource={data}
+                dataSource={landData}
                 toolBarRender={false}
                 search={false}
                 rowKey='sort'
@@ -289,7 +363,7 @@ export default function AddWorkOrder( ) {
                 添加地块
               </Button>
             </Form.Item>
-            <Form.Item label="机组"  rules={[{ required: true, message: '请选择机组' }]} name="group">
+            <Form.Item label="机组"  rules={[{ required: true, message: '请选择机组' }]} name="uavConfigId">
               <Select
                 options={[
                   {
@@ -308,50 +382,23 @@ export default function AddWorkOrder( ) {
             <Form.Item label="清洗时间">
               <Input disabled={true} />
             </Form.Item>
-            <Form.Item label="起飞点">
+            <Form.Item label="起飞点" rules={[{ required: true, message: '请选起飞点' }]} name="takeoffPointId">
               <Select
-                options={[
-                  {
-                    label: '干洗',
-                    value: '干洗'
-                  },
-                  {
-                    label: '水洗',
-                    value: '水洗'
-                  }
-                ]}
+                options={start}
                 showSearch={false} // 如果不需要搜索可关闭
                 placeholder="请选择工单类型"
               />
             </Form.Item>
-            <Form.Item label="挂载点">
+            <Form.Item label="挂载点" rules={[{ required: true, message: '请选挂载点' }]} name="mountPointId">
               <Select
-                options={[
-                  {
-                    label: '干洗',
-                    value: '干洗'
-                  },
-                  {
-                    label: '水洗',
-                    value: '水洗'
-                  }
-                ]}
+                options={pull}
                 showSearch={false} // 如果不需要搜索可关闭
                 placeholder="请选择工单类型"
               />
             </Form.Item>
-            <Form.Item label="卸载点">
+            <Form.Item label="卸载点" rules={[{ required: true, message: '请选卸载点' }]} name="uploadPointId">
               <Select
-                options={[
-                  {
-                    label: '干洗',
-                    value: '干洗'
-                  },
-                  {
-                    label: '水洗',
-                    value: '水洗'
-                  }
-                ]}
+                options={unPull}
                 showSearch={false} // 如果不需要搜索可关闭
                 placeholder="请选择工单类型"
               />
@@ -386,7 +433,7 @@ export default function AddWorkOrder( ) {
                 const {
                   data: { records, total },
                   code
-                } = await land(params);
+                } = await land({...params, areaId: landId });
 
                 return { data: records, success: !code, total: total };
               }}

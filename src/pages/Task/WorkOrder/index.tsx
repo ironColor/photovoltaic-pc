@@ -12,7 +12,7 @@ const WorkOrder: React.FC = () => {
   const columns: ProColumns<Land.Item>[] = [
     {
       title: '工单名称',
-      dataIndex: 'parentTaskName',
+      dataIndex: 'workOrderName',
       width: 270,
       ellipsis: true
     },
