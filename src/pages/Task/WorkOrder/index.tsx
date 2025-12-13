@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Button, Divider, message, Popconfirm, Row, Space, Table } from 'antd';
+import { Button, message, Popconfirm, Row, Space, Table } from 'antd';
 import { ProColumns, ProTable } from '@ant-design/pro-components';
 import { history } from '@@/core/history';
 import { del, page } from './service';
@@ -12,20 +12,32 @@ const WorkOrder: React.FC = () => {
   const columns: ProColumns<Land.Item>[] = [
     {
       title: '工单名称',
-      dataIndex: 'workOrderName',
+      dataIndex: 'orderName',
       width: 270,
       ellipsis: true
     },
     {
-      title: '工单机组',
+      title: '场地名称',
       dataIndex: 'areaName',
       width: 270,
       ellipsis: true,
       search: false
     },
     {
-      title: '工单地块',
-      dataIndex: 'taskId',
+      title: '起飞点',
+      dataIndex: 'takeoffPointName',
+      ellipsis: true,
+      search: false
+    },
+    {
+      title: "挂载点",
+      dataIndex: 'mountPointName',
+      ellipsis: true,
+      search: false
+    },
+    {
+      title: '卸载点',
+      dataIndex: 'uploadPointName',
       ellipsis: true,
       search: false
     },
@@ -35,55 +47,55 @@ const WorkOrder: React.FC = () => {
       width: 170,
       search: false
     },
-    {
-      title: '操作',
-      width: 170,
-      search: false,
-      render: (text: any) => {
-        return (
-          <>
-            <a
-              onClick={() => {
-                history.push({
-                  pathname: `/task/design/add`,
-                  search: `?id=${encodeURIComponent(text?.parentTaskId)}`
-                });
-              }}
-            >
-              编辑
-            </a>
-            <Divider type='vertical' />
-            <a
-              onClick={() => {
-                history.push({
-                  pathname: `/task/workOrder/execute`,
-                  search: `?id=${encodeURIComponent(text?.parentTaskId)}`
-                });
-              }}
-            >
-              执行
-            </a>
-            <Divider type='vertical' />
-            <Popconfirm
-              title='确认删除?'
-              okText='确认'
-              cancelText='取消'
-              onConfirm={async () => {
-                const { code, msg } = await del([text.parentTaskId]);
-                if (code === 0) {
-                  message.success('删除成功');
-                  formRef.current?.reload();
-                } else {
-                  message.error(msg || '删除失败');
-                }
-              }}
-            >
-              <span style={{ color: '#1677ff' }}>删除</span>
-            </Popconfirm>
-          </>
-        );
-      }
-    }
+    // {
+    //   title: '操作',
+    //   width: 170,
+    //   search: false,
+    //   render: (text: any) => {
+    //     return (
+    //       <>
+    //         <a
+    //           onClick={() => {
+    //             history.push({
+    //               pathname: `/task/workOrder/add`,
+    //               search: `?orderId=${encodeURIComponent(text?.orderId)}`
+    //             });
+    //           }}
+    //         >
+    //           编辑
+    //         </a>
+    //         <Divider type='vertical' />
+    //         <a
+    //           onClick={() => {
+    //             history.push({
+    //               pathname: `/task/workOrder/execute`,
+    //               search: `?id=${encodeURIComponent(text?.parentTaskId)}`
+    //             });
+    //           }}
+    //         >
+    //           执行
+    //         </a>
+    //         <Divider type='vertical' />
+    //         <Popconfirm
+    //           title='确认删除?'
+    //           okText='确认'
+    //           cancelText='取消'
+    //           onConfirm={async () => {
+    //             const { code, msg } = await del([text.orderId]);
+    //             if (code === 0) {
+    //               message.success('删除成功');
+    //               formRef.current?.reload();
+    //             } else {
+    //               message.error(msg || '删除失败');
+    //             }
+    //           }}
+    //         >
+    //           <span style={{ color: '#1677ff' }}>删除</span>
+    //         </Popconfirm>
+    //       </>
+    //     );
+    //   }
+    // }
   ];
 
   return (
@@ -146,7 +158,7 @@ const WorkOrder: React.FC = () => {
                 cancelText='取消'
                 onConfirm={async () => {
                   const { code, msg } = await del(
-                    selectedRows.map((item: any) => item.parentTaskId)
+                    selectedRows.map((item: any) => item.orderId)
                   );
                   if (code === 0) {
                     message.success('删除成功');

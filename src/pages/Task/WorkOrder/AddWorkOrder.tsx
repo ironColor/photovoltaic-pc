@@ -6,7 +6,14 @@ import { DragSortTable, ProTable } from '@ant-design/pro-components';
 import { land } from '@/pages/Base/service';
 import { landType } from '@/pages/components/Common';
 import { useSearchParams } from '@@/exports';
-import { detailMock, getPointOptions, tree } from '@/pages/Task/WorkOrder/service';
+import {
+  detailInfo,
+  getGroupList,
+  getPointOptions,
+  getTime,
+  saveInfo,
+  tree, updateInfo
+} from '@/pages/Task/WorkOrder/service';
 import { isArray } from 'lodash';
 
 export default function AddWorkOrder( ) {
@@ -21,6 +28,8 @@ export default function AddWorkOrder( ) {
   const [start, setStart] = useState<any[]>([]);
   const [pull, setPull] = useState<any[]>([]);
   const [unPull, setUnPull] = useState<any[]>([]);
+  const [groupOptions, setGroupOptions] = useState<any[]>([]);
+  const [robotsId, setRobotsId] = useState<any[]>([]);
 
 
   const handleColumns = useCallback((simple: boolean) => {
@@ -201,90 +210,165 @@ export default function AddWorkOrder( ) {
 
   const handleLandNameChange = useCallback((value, option) => {
     setLandId(option.areaId)
-
   }, []);
 
-  useEffect(() => {
-    tree().then((res) => {
-      const { code, msg, data } = res;
-      if (code !== 0) {
-        message.error(msg || '地块数据获取失败');
-        return;
-      }
-
-      const options = data.map((item: any) => ({
-        label: item.areaName,
-        value: item.areaId,
-        ...item
-      }))
-      setLandOptions(options)
-    })
-
-    // Mock 工单修改
-    const id = searchParams.get('id');
-    if (!id) return;
-    detailMock(+id).then(res => {
-      const { code, msg, data } = res;
-      if (code !== 0) {
-        message.error(msg || '数据获取失败');
-        return;
-      }
-      form.setFieldsValue({
-        name: data.landName,
-        type: '干洗'
-      })
-      // 地块单独处理
-      // setData([data])
-    });
+  const handleGroupChange = useCallback((value, option) => {
+    console.log(option.robots.map(item => item.robotId));
+    setRobotsId(option.robots.map(item => item.robotId))
   }, []);
 
-  useEffect(() => {
-    mapRef.current.home(landData)
-    form.setFieldsValue({
-      landIds: landData
+  const handleCalculate  = useCallback((orderType, landIds, uavConfigId)=> {
+    getTime({ landIds: landIds.map(item => item.landId), robotIds: robotsId }).then(res => {
+      console.log(res);
     })
-  }, [landData]);
+  }, [])
 
-  useEffect(() => {
-    if (landId) {
-      getPointOptions({ areaId: landId, type: 10}).then(res => {
-        if (isArray(res)) {
-          const options = res.map(item => ({
-            label: item.pointName,
-            value: item.pointId,
-            ...item
-          }))
-          setStart(options)
+  const onFinish = async (value: any) => {
+    const orderId = searchParams.get('orderId');
+
+    if(orderId) {
+      updateInfo({...value, robotIds: robotsId, landIds: landId }).then(res => {
+        const { code, msg, data } = res;
+        if (code !== 0) {
+          message.error(msg || '创建失败');
+          return;
         } else {
-          message.error('下拉框数据获取失败');
+          message.success('提交成功');
+          form.resetFields();
         }
       })
-      getPointOptions({ areaId: landId, type: 7}).then(res => {
-        if (isArray(res)) {
-          const options = res.map(item => ({
-            label: item.pointName,
-            value: item.pointId,
-            ...item
-          }))
-          setPull(options)
+    } else {
+      saveInfo({ ...value, robotIds: robotsId, landIds: value.landIds.map(item => item.landId) }).then(res => {
+        const { code, msg, data } = res;
+        if (code !== 0) {
+          message.error(msg || '创建失败');
+          return;
         } else {
-          message.error('下拉框数据获取失败');
+          message.success('提交成功');
+          form.resetFields();
         }
-      })
-      getPointOptions({ areaId: landId, type: 8}).then(res => {
-        if (isArray(res)) {
-          const options = res.map(item => ({
-            label: item.pointName,
-            value: item.pointId,
-            ...item
-          }))
-          setUnPull(options)
-        } else {
-          message.error('下拉框数据获取失败');
-        }
-      })
+      });
     }
-  }, [landId]);
+  }
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // 第一步：获取场地树（tree）
+        const treeRes = await tree();
+        const { code, msg, data } = treeRes;
+
+        if (code !== 0) {
+          message.error(msg || '地块数据获取失败');
+          return;
+        }
+
+        const options = data.map((item: any) => ({
+          label: item.areaName,
+          value: item.areaId,
+          ...item,
+        }));
+        setLandOptions(options);
+
+        // 第二步：如果有 orderId，再获取工单详情
+        const orderId = searchParams.get('orderId');
+        if (!orderId) return;
+
+        const detailRes = await detailInfo(+orderId);
+        const { code: detailCode, msg: detailMsg, data: detailData } = detailRes;
+
+        if (detailCode !== 0) {
+          message.error(detailMsg || '工单详情获取失败');
+          return;
+        }
+
+        // 回填表单字段（确保 name 与 Form.Item 一致）
+        form.setFieldsValue({
+          areaId: detailData.areaId,
+          orderName: detailData.orderName,
+          orderType: detailData.orderType,
+          landIds: detailData.landIds || [],
+          takeoffPointId: detailData.takeoffPointId,
+          mountPointId: detailData.mountPointId,
+          uploadPointId: detailData.uploadPointId,
+          uavConfigId: detailData.uavConfigId,
+          estimatedWorkTime: detailData.estimatedWorkTime
+        });
+        // 设置areaID 用于添加地块时，接口获取对应场地下的地块信息
+        setLandId(detailData.areaId);
+
+        setRobotsId(detailData.robotIds);
+        setLandId(detailData.landIds);
+
+      } catch (err) {
+        console.error('数据加载异常:', err);
+        message.error('数据加载出错，请稍后重试');
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+      mapRef.current.home(landData)
+      form.setFieldsValue({
+        landIds: landData
+      })
+    }, [landData]);
+
+  useEffect(() => {
+      if (landId) {
+        getPointOptions({ areaId: landId, type: 10}).then(res => {
+          if (isArray(res)) {
+            const options = res.map(item => ({
+              label: item.pointName,
+              value: item.pointId,
+              ...item
+            }))
+            setStart(options)
+          } else {
+            message.error('下拉框数据获取失败');
+          }
+        })
+        getPointOptions({ areaId: landId, type: 7}).then(res => {
+          if (isArray(res)) {
+            const options = res.map(item => ({
+              label: item.pointName,
+              value: item.pointId,
+              ...item
+            }))
+            setPull(options)
+          } else {
+            message.error('下拉框数据获取失败');
+          }
+        })
+        getPointOptions({ areaId: landId, type: 8}).then(res => {
+          if (isArray(res)) {
+            const options = res.map(item => ({
+              label: item.pointName,
+              value: item.pointId,
+              ...item
+            }))
+            setUnPull(options)
+          } else {
+            message.error('下拉框数据获取失败');
+          }
+        })
+        getGroupList({ name: '', uavCode: '' }).then(res => {
+          const { code, msg, data } = res;
+          if (code !== 0) {
+            message.error(msg || '机组数据获取失败');
+            return;
+          }
+          const options = data.map(item => ({
+            label: item.name,
+            value: item.id,
+            ...item
+          }))
+          setGroupOptions(options)
+        })
+      }
+    }, [landId]);
 
   return (
     <Row gutter={32} style={{ background: '#fff'}}>
@@ -299,6 +383,23 @@ export default function AddWorkOrder( ) {
             wrapperCol={{ span: 16 }}
             style={{ maxWidth: 600 }}
             form={form}
+            onFinish={onFinish}
+            onValuesChange={(changedValues, allValues) => {
+              const { orderType, landIds, uavConfigId } = allValues;
+
+              // 判断三个字段是否都有值
+              if (
+                orderType !== undefined &&
+                orderType !== null &&
+                landIds &&
+                landIds.length > 0 &&
+                uavConfigId !== undefined &&
+                uavConfigId !== null
+              ) {
+                // 触发你的计算逻辑
+                handleCalculate(orderType, landIds, uavConfigId);
+              }
+            }}
           >
             <Form.Item label='场地名称' rules={[{ required: true, message: '请选择场地名称' }]} name="areaId">
               <Select
@@ -365,21 +466,13 @@ export default function AddWorkOrder( ) {
             </Form.Item>
             <Form.Item label="机组"  rules={[{ required: true, message: '请选择机组' }]} name="uavConfigId">
               <Select
-                options={[
-                  {
-                    label: '干洗',
-                    value: '干洗'
-                  },
-                  {
-                    label: '水洗',
-                    value: '水洗'
-                  }
-                ]}
+                options={groupOptions}
                 showSearch={false} // 如果不需要搜索可关闭
-                placeholder="请选择工单类型"
+                placeholder="请选择机组类型"
+                onChange={handleGroupChange}
               />
             </Form.Item>
-            <Form.Item label="清洗时间">
+            <Form.Item label="清洗时间" name="estimatedWorkTime">
               <Input disabled={true} />
             </Form.Item>
             <Form.Item label="起飞点" rules={[{ required: true, message: '请选起飞点' }]} name="takeoffPointId">

@@ -36,7 +36,7 @@ export async function update(body: any) {
 }
 
 export async function del(body: any) {
-  return request<API.R<any>>('/ppc/ppcParentTask/disable', {
+  return request<API.R<any>>('/ppc/workOrder/delete', {
     method: 'PUT',
     data: body,
   });
@@ -74,3 +74,38 @@ export const getPointOptions = async (params: any) => {
     method: 'GET'
   });
 };
+
+export const getGroupList = async (params: any) => {
+  return request<API.R<any>>('/ppc/uav/list', {
+    params,
+    method: 'GET'
+  });
+};
+
+export const getTime = async (body: any) => {
+  return request<API.R<any>>('/ppc/workOrder/getEstimatedWorkTime', {
+    data: body,
+    method: 'POST'
+  })
+}
+
+export const saveInfo = async (body: any) => {
+  return request<API.R<any>>('/ppc/uav/save', {
+    method: 'POST',
+    data: body,
+  });
+}
+
+
+export const detailInfo = async (orderId: number) => {
+  return request<API.R<any>>(`/ppc/workOrder/detail/${orderId}`, {
+    method: 'GET'
+  });
+}
+
+export const updateInfo = async (body: any) => {
+  return request<API.R<any>>('/ppc/workOrder/update', {
+    method: 'PUT',
+    data: body,
+  });
+}
