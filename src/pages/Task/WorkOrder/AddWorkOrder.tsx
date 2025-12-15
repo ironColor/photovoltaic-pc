@@ -197,7 +197,14 @@ export default function AddWorkOrder( ) {
       ...item,
       sort: index + landData.length,
     }));
-    setLandData(prev => [...prev, ...uniqueNewItems]);
+    const isUpdate = !!searchParams.get('orderId')
+
+      if (isUpdate) {
+          setUpdateLandsId([...updateLandsId, ...uniqueNewItems.map(item => item.landId)])
+      } else {
+          setLandData(prev => [...prev, ...uniqueNewItems]);
+      }
+
   }
 
   const handleDragSortEnd = (_: number, __: number, newDataSource: any) => {
@@ -221,7 +228,11 @@ export default function AddWorkOrder( ) {
   }, []);
 
   const handleCalculate  = useCallback((orderType, landIds, uavConfigId)=> {
-    getTime({ landIds: landIds.map(item => item.landId), robotIds: robotsId }).then(res => {
+      const orderId = searchParams.get('orderId');
+
+      const landIdParams = orderId ? updateLandsId : landIds.map(item => item.landId)
+
+      getTime({ landIds: landIdParams, robotIds: robotsId }).then(res => {
       console.log(res);
     })
   }, [robotsId])
@@ -230,7 +241,7 @@ export default function AddWorkOrder( ) {
     const orderId = searchParams.get('orderId');
 
     if(orderId) {
-      updateInfo({...value, robotIds: robotsId, landIds: landId }).then(res => {
+      updateInfo({...value, robotIds: robotsId, landIds: updateLandsId, orderId }).then(res => {
         const { code, msg, data } = res;
         if (code !== 0) {
           message.error(msg || '创建失败');
