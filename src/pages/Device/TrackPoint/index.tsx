@@ -1,10 +1,8 @@
 import { ProColumns, ProTable } from '@ant-design/pro-components';
 import { history } from '@@/core/history';
 import { Button, Divider, message, Popconfirm, Space, Table } from 'antd';
-import { del, page } from '@/pages/Task/WorkOrder/service';
 import React, { useRef } from 'react';
-import { PlusOutlined } from '@ant-design/icons';
-import { getList } from '@/pages/Device/TrackPoint/service';
+import { getList, del } from '@/pages/Device/TrackPoint/service';
 
 const Option = {
   0: "普通点",
@@ -82,23 +80,12 @@ const TrackPoint = () => {
               编辑
             </a>
             <Divider type='vertical' />
-            <a
-              onClick={() => {
-                history.push({
-                  pathname: `/task/workOrder/execute`,
-                  search: `?id=${encodeURIComponent(text?.parentTaskId)}`
-                });
-              }}
-            >
-              执行
-            </a>
-            <Divider type='vertical' />
             <Popconfirm
               title='确认删除?'
               okText='确认'
               cancelText='取消'
               onConfirm={async () => {
-                const { code, msg } = await del([text.orderId]);
+                const { code, msg } = await del([text.pointId]);
                 if (code === 0) {
                   message.success('删除成功');
                 } else {
@@ -139,16 +126,16 @@ const TrackPoint = () => {
         return { data: records, success: !code, total: total };
       }}
       dateFormatter='string'
-      toolBarRender={() => [
-        <Button
-          key='button'
-          icon={<PlusOutlined />}
-          onClick={() => history.push('/task/workOrder/add')}
-          type='primary'
-        >
-          新增
-        </Button>
-      ]}
+      // toolBarRender={() => [
+      //   <Button
+      //     key='button'
+      //     icon={<PlusOutlined />}
+      //     onClick={() => history.push('/task/workOrder/add')}
+      //     type='primary'
+      //   >
+      //     新增
+      //   </Button>
+      // ]}
       rowSelection={{
         // https://ant.design/components/table-cn/#components-table-demo-row-selection-custom
         selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT]

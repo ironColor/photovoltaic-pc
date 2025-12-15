@@ -14,7 +14,10 @@ import {
   saveInfo,
   tree, updateInfo
 } from '@/pages/Task/WorkOrder/service';
-import { isArray } from 'lodash';
+
+function isArray(value) {
+  return Array.isArray(value);
+}
 
 export default function AddWorkOrder( ) {
   const mapRef = useRef<any>();
@@ -30,6 +33,7 @@ export default function AddWorkOrder( ) {
   const [unPull, setUnPull] = useState<any[]>([]);
   const [groupOptions, setGroupOptions] = useState<any[]>([]);
   const [robotsId, setRobotsId] = useState<any[]>([]);
+  const [updateLandsId, setUpdateLandsId] = useState<any[]>([]);
 
 
   const handleColumns = useCallback((simple: boolean) => {
@@ -213,7 +217,6 @@ export default function AddWorkOrder( ) {
   }, []);
 
   const handleGroupChange = useCallback((value, option) => {
-    console.log(option.robots.map(item => item.robotId));
     setRobotsId(option.robots.map(item => item.robotId))
   }, []);
 
@@ -221,7 +224,7 @@ export default function AddWorkOrder( ) {
     getTime({ landIds: landIds.map(item => item.landId), robotIds: robotsId }).then(res => {
       console.log(res);
     })
-  }, [])
+  }, [robotsId])
 
   const onFinish = async (value: any) => {
     const orderId = searchParams.get('orderId');
@@ -298,7 +301,7 @@ export default function AddWorkOrder( ) {
         setLandId(detailData.areaId);
 
         setRobotsId(detailData.robotIds);
-        setLandId(detailData.landIds);
+        setUpdateLandsId(detailData.landIds);
 
       } catch (err) {
         console.error('数据加载异常:', err);
@@ -370,9 +373,11 @@ export default function AddWorkOrder( ) {
       }
     }, [landId]);
 
+  const isUpdate = !!searchParams.get('orderId')
+
   return (
     <Row gutter={32} style={{ background: '#fff'}}>
-      <Col flex='750px'>
+      <Col flex='650px'>
         <Map complete={setComplete} ref={mapRef} />
       </Col>
       <Col flex='auto'>
@@ -442,19 +447,24 @@ export default function AddWorkOrder( ) {
                 },
               ]}
             >
-              <DragSortTable
-                headerTitle={null}
-                columns={handleColumns(true)}
-                dataSource={landData}
-                toolBarRender={false}
-                search={false}
-                rowKey='sort'
-                dragSortKey='sort'
-                onDragSortEnd={handleDragSortEnd}
-                style={{ width: '90%' }}
-                pagination={false}
-                scroll={{ y: 400 }}
-              />
+                {
+                    isUpdate ? updateLandsId.join(',') :
+                        <DragSortTable
+                        headerTitle={null}
+                        columns={handleColumns(true)}
+                        dataSource={landData}
+                        toolBarRender={false}
+                        search={false}
+                        rowKey='sort'
+                        dragSortKey='sort'
+                        onDragSortEnd={handleDragSortEnd}
+                        style={{ width: '90%' }}
+                        pagination={false}
+                        scroll={{ y: 400 }}
+                    />
+                }
+
+
               <Button
                 style={{ width: '90%', marginTop: '12px' }}
                 type='dashed'

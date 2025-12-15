@@ -37,7 +37,7 @@ export async function update(body: any) {
 
 export async function del(body: any) {
   return request<API.R<any>>('/ppc/workOrder/delete', {
-    method: 'PUT',
+    method: 'DELETE',
     data: body,
   });
 }

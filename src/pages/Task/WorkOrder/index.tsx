@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Button, message, Popconfirm, Row, Space, Table } from 'antd';
+import { Button, Divider, message, Popconfirm, Row, Space, Table } from 'antd';
 import { ProColumns, ProTable } from '@ant-design/pro-components';
 import { history } from '@@/core/history';
 import { del, page } from './service';
@@ -47,55 +47,55 @@ const WorkOrder: React.FC = () => {
       width: 170,
       search: false
     },
-    // {
-    //   title: '操作',
-    //   width: 170,
-    //   search: false,
-    //   render: (text: any) => {
-    //     return (
-    //       <>
-    //         <a
-    //           onClick={() => {
-    //             history.push({
-    //               pathname: `/task/workOrder/add`,
-    //               search: `?orderId=${encodeURIComponent(text?.orderId)}`
-    //             });
-    //           }}
-    //         >
-    //           编辑
-    //         </a>
-    //         <Divider type='vertical' />
-    //         <a
-    //           onClick={() => {
-    //             history.push({
-    //               pathname: `/task/workOrder/execute`,
-    //               search: `?id=${encodeURIComponent(text?.parentTaskId)}`
-    //             });
-    //           }}
-    //         >
-    //           执行
-    //         </a>
-    //         <Divider type='vertical' />
-    //         <Popconfirm
-    //           title='确认删除?'
-    //           okText='确认'
-    //           cancelText='取消'
-    //           onConfirm={async () => {
-    //             const { code, msg } = await del([text.orderId]);
-    //             if (code === 0) {
-    //               message.success('删除成功');
-    //               formRef.current?.reload();
-    //             } else {
-    //               message.error(msg || '删除失败');
-    //             }
-    //           }}
-    //         >
-    //           <span style={{ color: '#1677ff' }}>删除</span>
-    //         </Popconfirm>
-    //       </>
-    //     );
-    //   }
-    // }
+    {
+      title: '操作',
+      width: 170,
+      search: false,
+      render: (text: any) => {
+        return (
+          <>
+            <a
+              onClick={() => {
+                history.push({
+                  pathname: `/task/workOrder/add`,
+                  search: `?orderId=${encodeURIComponent(text?.orderId)}`
+                });
+              }}
+            >
+              编辑
+            </a>
+            <Divider type='vertical' />
+            <a
+              onClick={() => {
+                history.push({
+                  pathname: `/task/workOrder/execute`,
+                  search: `?id=${encodeURIComponent(text?.parentTaskId)}`
+                });
+              }}
+            >
+              执行
+            </a>
+            <Divider type='vertical' />
+            <Popconfirm
+              title='确认删除?'
+              okText='确认'
+              cancelText='取消'
+              onConfirm={async () => {
+                const { code, msg } = await del([text.orderId]);
+                if (code === 0) {
+                  message.success('删除成功');
+                  formRef.current?.reload();
+                } else {
+                  message.error(msg || '删除失败');
+                }
+              }}
+            >
+              <span style={{ color: '#1677ff' }}>删除</span>
+            </Popconfirm>
+          </>
+        );
+      }
+    }
   ];
 
   return (
