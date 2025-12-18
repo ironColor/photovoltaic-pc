@@ -132,7 +132,12 @@ export default [
             component: './Task/WorkOrder/ExecuteWork'
           }
         ]
-      }
+      },
+      {
+        name: '轨迹点',
+        path: '/task/trackPoint',
+        component: './Device/TrackPoint'
+      },
     ]
   },
   {
@@ -158,11 +163,6 @@ export default [
         name: '参数管理',
         path: '/device/params',
         component: './Device/Params'
-      },
-      {
-        name: '轨迹点',
-        path: '/device/trackPoint',
-        component: './Device/TrackPoint'
       },
       {
         name: '机组配置',

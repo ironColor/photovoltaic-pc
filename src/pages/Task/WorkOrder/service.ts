@@ -90,7 +90,7 @@ export const getTime = async (body: any) => {
 }
 
 export const saveInfo = async (body: any) => {
-  return request<API.R<any>>('/ppc/uav/save', {
+  return request<API.R<any>>('/ppc/workOrder/save', {
     method: 'POST',
     data: body,
   });
