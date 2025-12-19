@@ -5,6 +5,7 @@ import { history } from '@@/core/history';
 import { del, page } from './service';
 import { PlusOutlined } from '@ant-design/icons';
 import TreeCard from '@/pages/components/Tree';
+import { record } from '@umijs/utils/compiled/zod';
 
 const WorkOrder: React.FC = () => {
   const formRef = useRef<any>();
@@ -18,8 +19,25 @@ const WorkOrder: React.FC = () => {
       ellipsis: true
     },
     {
+      title: '工单类型',
+      dataIndex: 'orderType',
+      width: 270,
+      ellipsis: true,
+      search: false,
+      render: (text, record) => {
+        return record.orderType === 1 ? '干洗' : '水洗'
+      }
+    },
+    {
       title: '场地名称',
       dataIndex: 'areaName',
+      width: 270,
+      ellipsis: true,
+      search: false
+    },
+    {
+      title: '机组名称',
+      dataIndex: 'uavConfigName',
       width: 270,
       ellipsis: true,
       search: false
