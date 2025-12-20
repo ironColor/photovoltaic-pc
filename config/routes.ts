@@ -112,6 +112,20 @@ export default [
         component: './Task/Subtask'
       },
       {
+        name: '工单监控',
+        path: '/task/workMonitor',
+        routes: [
+          {
+            path: '/task/workMonitor',
+            redirect: '/task/workMonitor/list'
+          },
+          {
+            path: '/task/workMonitor/list',
+            component: './Task/WorkMonitor'
+          },
+        ]
+      },
+      {
         name: '工单管理',
         path: '/task/workOrder',
         routes: [
@@ -130,6 +144,10 @@ export default [
           {
             path: '/task/workOrder/execute',
             component: './Task/WorkOrder/ExecuteWork'
+          },
+          {
+            path: '/task/workOrder/subTask',
+            component: './Task/WorkOrder/workTaskList'
           }
         ]
       },

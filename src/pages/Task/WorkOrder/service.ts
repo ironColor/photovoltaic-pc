@@ -109,3 +109,29 @@ export const updateInfo = async (body: any) => {
     data: body,
   });
 }
+
+export const workOrderExcuteQuery = async (params: any) => {
+  return request<API.R<any>>('/ppc/workOrder/monitor/page', {
+    method: 'GET',
+    data: params,
+  });
+}
+
+export const workOrderExcute = async (params: any) => {
+  return request<API.R<any>>('/ppc/workOrder/execute', {
+    method: 'GET',
+    data: params,
+  });
+}
+
+export const workOrderImmediate = async (workOrderLogId: any) => {
+  return request<API.R<any>>(`/ppc/workOrder/monitor/inner/${workOrderLogId}`, {
+    method: 'GET'
+  });
+}
+
+export const getWorkList = async (params: any) => {
+  return request<API.R<any>>(`/ppc/workOrder/subtask/${params.id}`, {
+    method: 'GET'
+  });
+}

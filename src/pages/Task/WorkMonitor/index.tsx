@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Button, Col, Divider, message, Popconfirm, Row, Space, Table } from 'antd';
 import { ProColumns, ProTable } from '@ant-design/pro-components';
 import { history } from '@@/core/history';
-import { del, page } from './service';
+import { page } from './service';
 import { PlusOutlined } from '@ant-design/icons';
 import TreeCard from '@/pages/components/Tree';
 
@@ -75,51 +75,12 @@ const WorkOrder: React.FC = () => {
             <a
               onClick={() => {
                 history.push({
-                  pathname: `/task/workOrder/add`,
-                  search: `?orderId=${encodeURIComponent(text?.orderId)}`
-                });
-              }}
-            >
-              编辑
-            </a>
-            <Divider type='vertical' />
-            <a
-              onClick={() => {
-                history.push({
                   pathname: `/task/workOrder/execute`,
                   search: `?id=${encodeURIComponent(text?.parentTaskId)}`
                 });
               }}
             >
               执行
-            </a>
-            <Divider type='vertical' />
-            <Popconfirm
-              title='确认删除?'
-              okText='确认'
-              cancelText='取消'
-              onConfirm={async () => {
-                const { code, msg } = await del([text.orderId]);
-                if (code === 0) {
-                  message.success('删除成功');
-                  formRef.current?.reload();
-                } else {
-                  message.error(msg || '删除失败');
-                }
-              }}
-            >
-              <span style={{ color: '#1677ff' }}>删除</span>
-            </Popconfirm>
-            <Divider type='vertical' />
-            <a
-              onClick={() => {
-                history.push({
-                  pathname: `/task/workOrder/subTask`,
-                  search: `?id=${encodeURIComponent(text?.orderId)}`
-                });
-              }}
-            >
-              任务列表
             </a>
           </>
         );
@@ -142,7 +103,7 @@ const WorkOrder: React.FC = () => {
           actionRef={formRef}
           params={{ areaId: areaId }}
           style={{ position: 'absolute' }}
-          headerTitle={<b>工单管理</b>}
+          headerTitle={<b>工单监控</b>}
           cardBordered={true}
           rowKey='parentTaskId'
           search={{
@@ -185,30 +146,6 @@ const WorkOrder: React.FC = () => {
                   取消选择
                 </a>
               </span>
-              </Space>
-            );
-          }}
-          tableAlertOptionRender={({ selectedRows }) => {
-            return (
-              <Space size={16}>
-                <Popconfirm
-                  title='确认删除?'
-                  okText='确认'
-                  cancelText='取消'
-                  onConfirm={async () => {
-                    const { code, msg } = await del(
-                      selectedRows.map((item: any) => item.orderId)
-                    );
-                    if (code === 0) {
-                      message.success('删除成功');
-                      formRef.current?.reload();
-                    } else {
-                      message.error(msg || '删除失败');
-                    }
-                  }}
-                >
-                  <span style={{ color: '#1677ff' }}>批量删除</span>
-                </Popconfirm>
               </Space>
             );
           }}

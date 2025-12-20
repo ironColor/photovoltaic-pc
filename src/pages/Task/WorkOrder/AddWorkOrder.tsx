@@ -24,6 +24,7 @@ export default function AddWorkOrder( ) {
   const [complete, setComplete] = useState(false);
   const [form] = Form.useForm();
   const [open, setOpen] = useState<boolean>(false);
+  // landData 选中的地块数据
   const [landData, setLandData] = useState<any[]>([]);
   const [landOptions, setLandOptions] = useState<any[]>([])
   const [searchParams] = useSearchParams();
@@ -32,9 +33,9 @@ export default function AddWorkOrder( ) {
   const [pull, setPull] = useState<any[]>([]);
   const [unPull, setUnPull] = useState<any[]>([]);
   const [groupOptions, setGroupOptions] = useState<any[]>([]);
+  const [robotOptions, setRobotOptions] = useState<any[]>([]);
   const [robotsId, setRobotsId] = useState<any[]>([]);
   const [updateLandsId, setUpdateLandsId] = useState<any[]>([]);
-
 
   const handleColumns = useCallback((simple: boolean) => {
     if (simple) {
@@ -224,18 +225,30 @@ export default function AddWorkOrder( ) {
   }, []);
 
   const handleGroupChange = useCallback((value, option) => {
-    setRobotsId(option.robots.map(item => item.robotId))
+    setRobotOptions(option.robots.map(item => ({
+      ...item,
+      label: item.robotCode,
+      value: item.robotId
+    })))
+
   }, []);
 
-  const handleCalculate  = useCallback((orderType, landIds, uavConfigId)=> {
-      const orderId = searchParams.get('orderId');
+  const getTimeClick = () => {
+    getTime({ landIds: landData.map(item => item.landId), robotIds: form.getFieldValue('robotIds'), }).then(res => {
+      const { code, msg, data } = res;
+      if (code !== 0) {
+        message.error(msg || '获取失败');
+        return;
+      } else {
+        message.success('获取成功');
+        form.setFieldsValue({
+          estimatedWorkTime: data
+        })
+        return;
+      }
+    });
+  }
 
-      const landIdParams = orderId ? updateLandsId : landIds.map(item => item.landId)
-
-      getTime({ landIds: landIdParams, robotIds: robotsId }).then(res => {
-      console.log(res);
-    })
-  }, [robotsId])
 
   const onFinish = async (value: any) => {
     const orderId = searchParams.get('orderId');
@@ -252,7 +265,7 @@ export default function AddWorkOrder( ) {
         }
       })
     } else {
-      saveInfo({ ...value, robotIds: robotsId, landIds: value.landIds.map(item => item.landId) }).then(res => {
+      saveInfo({ ...value, robotIds: form.getFieldValue('robotIds'), landIds: value.landIds.map(item => item.landId) }).then(res => {
         const { code, msg, data } = res;
         if (code !== 0) {
           message.error(msg || '创建失败');
@@ -306,13 +319,14 @@ export default function AddWorkOrder( ) {
           mountPointId: detailData.mountPointId,
           uploadPointId: detailData.uploadPointId,
           uavConfigId: detailData.uavConfigId,
-          estimatedWorkTime: detailData.estimatedWorkTime
+          estimatedWorkTime: detailData.estimatedWorkTime,
+          robotIds: detailData.robotIds
         });
         // 设置areaID 用于添加地块时，接口获取对应场地下的地块信息
         setLandId(detailData.areaId);
 
         setRobotsId(detailData.robotIds);
-        setUpdateLandsId(detailData.landIds);
+        setLandData(detailData.landList);
 
       } catch (err) {
         console.error('数据加载异常:', err);
@@ -379,6 +393,13 @@ export default function AddWorkOrder( ) {
             value: item.id,
             ...item
           }))
+
+          const robotList = options.filter(item => item.id === form.getFieldValue('uavConfigId'))[0]?.robots.map(item => ({
+            ...item,
+            label: item.robotCode,
+            value: item.robotId
+          }))
+          setRobotOptions(robotList)
           setGroupOptions(options)
         })
       }
@@ -400,22 +421,22 @@ export default function AddWorkOrder( ) {
             style={{ maxWidth: 600 }}
             form={form}
             onFinish={onFinish}
-            onValuesChange={(changedValues, allValues) => {
-              const { orderType, landIds, uavConfigId } = allValues;
-
-              // 判断三个字段是否都有值
-              if (
-                orderType !== undefined &&
-                orderType !== null &&
-                landIds &&
-                landIds.length > 0 &&
-                uavConfigId !== undefined &&
-                uavConfigId !== null
-              ) {
-                // 触发你的计算逻辑
-                handleCalculate(orderType, landIds, uavConfigId);
-              }
-            }}
+            // onValuesChange={(changedValues, allValues) => {
+            //   const { orderType, landIds, uavConfigId } = allValues;
+            //
+            //   // 判断三个字段是否都有值
+            //   if (
+            //     orderType !== undefined &&
+            //     orderType !== null &&
+            //     landIds &&
+            //     landIds.length > 0 &&
+            //     uavConfigId !== undefined &&
+            //     uavConfigId !== null
+            //   ) {
+            //     // 触发你的计算逻辑
+            //     handleCalculate(orderType, landIds, uavConfigId);
+            //   }
+            // }}
           >
             <Form.Item label='场地名称' rules={[{ required: true, message: '请选择场地名称' }]} name="areaId">
               <Select
@@ -458,24 +479,19 @@ export default function AddWorkOrder( ) {
                 },
               ]}
             >
-                {
-                    isUpdate ? updateLandsId.join(',') :
-                        <DragSortTable
-                        headerTitle={null}
-                        columns={handleColumns(true)}
-                        dataSource={landData}
-                        toolBarRender={false}
-                        search={false}
-                        rowKey='sort'
-                        dragSortKey='sort'
-                        onDragSortEnd={handleDragSortEnd}
-                        style={{ width: '90%' }}
-                        pagination={false}
-                        scroll={{ y: 400 }}
-                    />
-                }
-
-
+              <DragSortTable
+                headerTitle={null}
+                columns={handleColumns(true)}
+                dataSource={landData}
+                toolBarRender={false}
+                search={false}
+                rowKey='sort'
+                dragSortKey='sort'
+                onDragSortEnd={handleDragSortEnd}
+                style={{ width: '90%' }}
+                pagination={false}
+                scroll={{ y: 400 }}
+              />
               <Button
                 style={{ width: '90%', marginTop: '12px' }}
                 type='dashed'
@@ -491,6 +507,15 @@ export default function AddWorkOrder( ) {
                 showSearch={false} // 如果不需要搜索可关闭
                 placeholder="请选择机组类型"
                 onChange={handleGroupChange}
+              />
+            </Form.Item>
+            <Form.Item label="机器人"  rules={[{ required: true, message: '请选择机器人' }]} name="robotIds">
+              <Select
+                mode="multiple"
+                options={robotOptions}
+                showSearch={false} // 如果不需要搜索可关闭
+                placeholder="请选择机器人"
+                // onChange={handleGroupChange}
               />
             </Form.Item>
             <Form.Item label="清洗时间" name="estimatedWorkTime">
@@ -518,7 +543,8 @@ export default function AddWorkOrder( ) {
               />
             </Form.Item>
             <Form.Item label={null}>
-              <Button type="primary" htmlType="submit">
+              <Button type="primary"  onClick={getTimeClick}>获取清洗时间</Button>
+              <Button type="primary" htmlType="submit"  style={{ marginLeft: 8 }}>
                 确定
               </Button>
               <Button htmlType="button" style={{ marginLeft: 8 }} onClick={() => form.resetFields()}>
