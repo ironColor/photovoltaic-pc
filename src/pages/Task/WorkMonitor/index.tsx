@@ -76,7 +76,7 @@ const WorkOrder: React.FC = () => {
               onClick={() => {
                 history.push({
                   pathname: `/task/workOrder/execute`,
-                  search: `?id=${encodeURIComponent(text?.parentTaskId)}`
+                  search: `?id=${encodeURIComponent(text?.orderId)}`
                 });
               }}
             >

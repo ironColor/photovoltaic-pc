@@ -118,9 +118,9 @@ export const workOrderExcuteQuery = async (params: any) => {
 }
 
 export const workOrderExcute = async (params: any) => {
-  return request<API.R<any>>('/ppc/workOrder/execute', {
+  return request<API.R<any>>('/ppc/workOrder/monitor/execute', {
     method: 'GET',
-    data: params,
+    params: params,
   });
 }
 
@@ -134,4 +134,11 @@ export const getWorkList = async (params: any) => {
   return request<API.R<any>>(`/ppc/workOrder/subtask/${params.id}`, {
     method: 'GET'
   });
+}
+
+export const commandApi = async (body: any) => {
+  return request<API.R<any>>('/ppc/workOrder/monitor/command', {
+    method: 'POST',
+    data: body
+  })
 }
