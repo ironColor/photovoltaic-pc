@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Button, Col, Divider, message, Popconfirm, Row, Space, Table } from 'antd';
+import { Button, Col, Row, Space, Table } from 'antd';
 import { ProColumns, ProTable } from '@ant-design/pro-components';
 import { history } from '@@/core/history';
 import { page } from './service';
@@ -134,7 +134,6 @@ const WorkOrder: React.FC = () => {
             </Button>
           ]}
           rowSelection={{
-            // https://ant.design/components/table-cn/#components-table-demo-row-selection-custom
             selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT]
           }}
           tableAlertRender={({ selectedRowKeys, onCleanSelected }) => {

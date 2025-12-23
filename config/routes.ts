@@ -107,6 +107,25 @@ export default [
         component: './Task/Log'
       },
       {
+        name: '工单日志',
+        path: '/task/orderLog',
+        component: './Task/OrderLog',
+        routes: [
+          {
+            path: '/task/orderLog',
+            redirect: '/task/orderLog/list'
+          },
+          {
+            path: '/task/orderLog/list',
+            component: './Task/OrderLog',
+          },
+          {
+            path: '/task/orderLog/subLog',
+            component: './Task/OrderLog',
+          }
+        ]
+      },
+      {
         name: '子任务',
         path: '/task/subtask',
         component: './Task/Subtask'

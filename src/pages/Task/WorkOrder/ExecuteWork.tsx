@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from '@@/exports';
 import Map from '@/pages/components/Map';
 import { Panel } from 'rc-collapse';
-import { command, commandApi, workOrderExcute } from '@/pages/Task/WorkOrder/service';
+import { commandApi, workOrderExcute, workOrderImmediate } from '@/pages/Task/WorkOrder/service';
 import { useWebSocket } from 'ahooks';
 import { config } from '../../../../public/scripts/config';
 import { getCurrentUser } from '@/utils/authority';
@@ -266,10 +266,26 @@ export default function ExecuteWork() {
   const [dataArr, setDataArr] = useState<any[]>([]);
   const [colKey, setColKey] = useState<any[]>([]);
   const [select, setSelect] = useState<string>();
-  const { id } = useParams();
+  const [subTaskId, setSubTaskId] = useState<string>();
   const [searchParams] = useSearchParams();
+  const [orderLogId, setOrderLogId] = useState();
 
-  const call = useCallback(async () => {}, [])
+  const call = useCallback(() => {
+    if (orderLogId) {
+      workOrderImmediate({ id: orderLogId }).then(res => {
+        const { code, msg, data } = res;
+        if (code !== 0) {
+          message.error(msg || '获取失败');
+          return;
+        }
+        setDataArr(data.landInfos)
+      })
+    } else {
+      message.error('无主任务日志id')
+    }
+
+  }, [orderLogId])
+
 
   /**
    * 任务websocket
@@ -293,8 +309,6 @@ export default function ExecuteWork() {
       if (data.commandCode === 30) {
         // 飞机实时位置
         (window as any).mapRef(dataArr, [data.lon, data.lat]);
-        // 更新卫星数、RTK状态、电压等
-        setInfo(data);
       } else if (data.commandCode === 31) {
         // 自检成功，获取镜头角度参数
         execute({ commandCode: 25 });
@@ -336,10 +350,6 @@ export default function ExecuteWork() {
       } else if (data.commandCode === 120) {
         message.error('释放吸盘失败');
       } else if (data.commandCode === 123) {
-        setRobotVoltages(prev => ({
-          ...prev,
-          [data.robotCode]: [data.voltage1, data.voltage2] // 更新或新增机器人电压
-        }));
         call();
       } else if (data.commandCode === 127) {
         message.error('机器人工作结束失败');
@@ -358,7 +368,8 @@ export default function ExecuteWork() {
 
 
   const command = useCallback(async (c: number) => {
-    const { code, msg } = await commandApi({ commandCode: c, workOrderId: id });
+    const orderId = searchParams.get('id');
+    const { code, msg } = await commandApi({ commandCode: c, workOrderId: orderId, subTaskId: subTaskId });
     if (code !== 0) {
       message.error(msg || '执行失败');
       return null;
@@ -366,7 +377,8 @@ export default function ExecuteWork() {
     // 刷新列表
     call();
     message.success('消息已发出');
-  }, []);
+  }, [subTaskId]);
+
 
   const speak = (text: string) => {
     // 创建语音实例
@@ -395,8 +407,29 @@ export default function ExecuteWork() {
         return;
       }
       setDataArr(data.landInfos)
+      setOrderLogId(data.orderLogId)
     })
   }, [searchParams])
+
+  // 页面初始化
+  useEffect(() => {
+    // todo 存在mapRef.current值被清空的问题，故使用window转存变量
+    (window as any).mapRef = mapRef.current?.execute;
+
+    if (complete) {
+      // 建立Websocket连接
+      execWS?.connect && execWS?.connect();
+
+      // 执行地图数据初始化
+      mapRef.current?.execute?.(dataArr);
+    }
+
+    return () => {
+      // 断开Websocket连接
+      execWS?.disconnect && execWS?.disconnect();
+      console.log('Websocket断开连接~');
+    };
+  }, [complete]);
 
   return (
     <Card
@@ -404,20 +437,18 @@ export default function ExecuteWork() {
       title='执行工单'
       extra={
         <Space>
-          {/*<Button*/}
-          {/*  type={'primary'}*/}
-          {/*  style={{ backgroundColor: '#13c2c2' }}*/}
-          {/*>*/}
-          {/*  自检*/}
-          {/*</Button>*/}
-          <Button type={'primary'} onClick={onStart}>
+          <Button
+            type={'primary'}
+            style={{ backgroundColor: '#13c2c2' }}
+            onClick={() => command(20)}
+          >
+            自检
+          </Button>
+          <Button type={'primary'} onClick={() => command(21)}>
             启动
           </Button>
-          <Button type='primary' danger >
-            中断
-          </Button>
-          <Button type='primary' danger >
-            任务取消
+          <Button type='primary' danger onClick={() => command(22)}  >
+            急停
           </Button>
           <Button onClick={() => history.back()}>返回</Button>
         </Space>
@@ -429,7 +460,7 @@ export default function ExecuteWork() {
               style={{ height: '72vh', overflowY: 'auto' }}
             >
               {
-                dataArr.map((item, index) => <div style={{ width: '90%'}} key={index}>
+                dataArr?.map((item, index) => <div style={{ width: '90%'}} key={index}>
                   <div>
                     {item.landName}
                     {` 机器人${item.robotCode}`}
@@ -438,7 +469,10 @@ export default function ExecuteWork() {
                     {
                       item.subTasks.map((task, index) =>  <Panel
                         key={`${item.name}-${index}`}
-                        header={<Radio checked={select === `${task.taskName}机器人${item?.robot}号`} onChange={() => setSelect(`${task.taskName}机器人${item?.robot}号`)} >
+                        header={<Radio checked={select === `${task.taskName}机器人${item?.robot}号`} onChange={() => {
+                          setSelect(`${task.taskName}机器人${item?.robot}号`)
+                          setSubTaskId(task.subtaskId)
+                        }} >
                           {`${task.taskName}`}
                           {
                             task.error &&

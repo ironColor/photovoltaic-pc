@@ -20,7 +20,7 @@ export async function detail(params: number) {
   });
 }
 
-export const executeLog = async (params: object) => {
+export const  executeLog = async (params: object) => {
   return request<API.R<any>>('/ppc/ppcParentTaskLog/execute', {
     method: 'GET',
     params

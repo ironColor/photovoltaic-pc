@@ -124,8 +124,8 @@ export const workOrderExcute = async (params: any) => {
   });
 }
 
-export const workOrderImmediate = async (workOrderLogId: any) => {
-  return request<API.R<any>>(`/ppc/workOrder/monitor/inner/${workOrderLogId}`, {
+export const workOrderImmediate = async (params: any) => {
+  return request<API.R<any>>(`/ppc/workOrder/monitor/inner/${params.id}`, {
     method: 'GET'
   });
 }

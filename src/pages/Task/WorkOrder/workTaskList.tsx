@@ -158,7 +158,6 @@ const WorkTaskList: React.FC = () => {
           }}
           dateFormatter='string'
           rowSelection={{
-            // https://ant.design/components/table-cn/#components-table-demo-row-selection-custom
             selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT]
           }}
         />
