@@ -5,66 +5,44 @@ import { page, cruise } from './service';
 import Map from '@/pages/components/Map';
 import { Col, message, Modal, Row, Statistic, Table, Tag } from 'antd';
 import { taskType } from '@/pages/components/Common';
+import { useSearchParams } from '@@/exports';
 
 const Log: React.FC = () => {
   const [open, setOpen] = useState(false);
-  const [id, setId] = useState(0);
   const [data, setData] = useState<any[]>([]);
   const [names, setNames] = useState<any>([]);
   const mapRef = useRef<any>();
-  const [complete, setComplete] = useState(false);
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
+    const id = searchParams.get('id');
     id && cruise(id).then(res => setData(res.data));
-    console.log(data);
-    complete && mapRef.current?.log(data?.[0]?.planInfos);
-  }, [id, complete]);
+  }, []);
 
   const columns: ProColumns<any>[] = [
     {
-      title: '场地名称',
-      dataIndex: 'areaName',
-      width: 270,
-      ellipsis: true
+      title: '子任务名称',
+      dataIndex: 'taskName'
     },
     {
-      title: '工单名称',
-      dataIndex: 'orderName',
-      width: 270,
-      ellipsis: true
+      title: '任务类型',
+      dataIndex: 'taskType',
+      render: (text: number) => {
+        return taskType[text] || '-';
+      }
     },
     {
-      title: '工单类型',
-      dataIndex: 'orderType',
-      width: 90,
-      search: false,
-      render: text => <Tag color={'processing'}>{text}</Tag>
+      title: '地块名称',
+      dataIndex: 'landName'
     },
     {
-      title: '开始时间',
-      dataIndex: 'execStartTime',
-      search: false
-    },
-    {
-      title: '结束时间',
-      dataIndex: 'execEndTime',
-      search: false
+      title: '等待时间',
+      dataIndex: 'waitingTime',
+      render: (_, row) => <Tag color='blue'>{row.waitingTime} 秒</Tag>
     },
     {
       title: '状态',
-      dataIndex: 'execStatus',
-      width: 170,
-      valueEnum: {
-        执行中: {
-          text: '执行中'
-        },
-        已完成: {
-          text: '已完成'
-        },
-        中断: {
-          text: '中断'
-        }
-      }
+      dataIndex: 'execStatus'
     },
     {
       title: '详情',
@@ -73,14 +51,6 @@ const Log: React.FC = () => {
       render: (_, row) => (
         <a
           onClick={() => {
-            setOpen(true);
-            setId(row.id);
-            setNames({
-              areaName: row.areaName,
-              parentTaskName: row.parentTaskName,
-              execStartTime: row.execStartTime,
-              execStatus: row.execStatus
-            });
           }}
         >
           查看
@@ -114,71 +84,6 @@ const Log: React.FC = () => {
         }}
         dateFormatter='string'
       />
-
-      <Modal
-        title={'航迹图'}
-        open={open}
-        onCancel={() => setOpen(false)}
-        footer={null}
-        width={'65%'}
-        destroyOnClose
-        afterClose={() => setComplete(false)}
-      >
-        <Row gutter={16}>
-          <Col flex='550px'>
-            <Statistic
-              title={names.areaName || '获取失败'}
-              value={names.parentTaskName || '获取失败'}
-              style={{ margin: '0' }}
-            />
-            <Table
-              columns={[
-                {
-                  title: '子任务名称',
-                  dataIndex: 'taskName',
-                  render: (text, row: any) => (
-                    <a
-                      onClick={() => {
-                        if (!row.planInfos) {
-                          message.warning('暂无数据');
-                          return;
-                        }
-                        mapRef.current?.log(row.planInfos);
-                      }}
-                    >
-                      {text}
-                    </a>
-                  )
-                },
-                {
-                  title: '任务类型',
-                  dataIndex: 'taskType',
-                  width: 90,
-                  render: (text: number) => taskType[+text] || '-'
-                },
-                {
-                  title: '地块名称',
-                  dataIndex: 'landName'
-                },
-                {
-                  title: '状态',
-                  dataIndex: 'execStatus'
-                }
-              ]}
-              pagination={false}
-              dataSource={data}
-              key={'childTaskId'}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>执行开始时间：{names.execStartTime}</span>
-              <span>任务状态：{names.execStatus}</span>
-            </div>
-          </Col>
-          <Col flex='auto'>
-            <Map styles={{ height: '600px' }} complete={setComplete} ref={mapRef} />
-          </Col>
-        </Row>
-      </Modal>
     </>
   );
 };

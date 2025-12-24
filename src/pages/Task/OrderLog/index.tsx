@@ -3,20 +3,19 @@ import type { ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
 import { page, cruise } from './service';
 import Map from '@/pages/components/Map';
-import { Col, message, Modal, Row, Statistic, Table, Tag } from 'antd';
+import { Badge, Col, Modal, Row, Statistic, Table, type TableProps, Tag } from 'antd';
 import { taskType } from '@/pages/components/Common';
 
 const Log: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [id, setId] = useState(0);
-  const [data, setData] = useState();
+  const [data, setData] = useState<any>({});
   const [names, setNames] = useState<any>([]);
   const mapRef = useRef<any>();
   const [complete, setComplete] = useState(false);
 
   useEffect(() => {
     id && cruise(id).then(res => setData(res.data));
-    console.log(data);
     complete && mapRef.current?.log(data?.[0]?.planInfos);
   }, [id, complete]);
 
@@ -38,7 +37,14 @@ const Log: React.FC = () => {
       dataIndex: 'orderType',
       width: 90,
       search: false,
-      render: text => <Tag color={'processing'}>{text}</Tag>
+      valueEnum: {
+        1: {
+          text: '干洗'
+        },
+        2: {
+          text: '水洗'
+        }
+      }
     },
     {
       title: '开始时间',
@@ -74,7 +80,7 @@ const Log: React.FC = () => {
         <a
           onClick={() => {
             setOpen(true);
-            setId(row.subtaskId);
+            setId(row.id);
             setNames({
               areaName: row.areaName,
               parentTaskName: row.parentTaskName,
@@ -86,6 +92,33 @@ const Log: React.FC = () => {
           查看
         </a>
       )
+    }
+  ];
+
+  const columnsModal = [
+    {
+      title: '子任务名称',
+      dataIndex: 'taskName'
+    },
+    {
+      title: '任务类型',
+      dataIndex: 'taskType',
+      render: (text: number) => {
+        return taskType[text] || '-';
+      }
+    },
+    {
+      title: '地块名称',
+      dataIndex: 'landName'
+    },
+    {
+      title: '等待时间',
+      dataIndex: 'waitingTime',
+      render: (text: number) => <Tag color='blue'>{text} 秒</Tag>
+    },
+    {
+      title: '状态',
+      dataIndex: 'execStatus'
     }
   ];
 
@@ -126,16 +159,22 @@ const Log: React.FC = () => {
       >
         <Row gutter={16}>
           <Col flex='550px'>
-            <Statistic
-              title={names.areaName || '获取失败'}
-              value={names.parentTaskName || '获取失败'}
-              style={{ margin: '0' }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            {/*<Statistic*/}
+            {/*  title={names.areaName || '获取失败'}*/}
+            {/*  value={names.parentTaskName || '获取失败'}*/}
+            {/*  style={{ margin: '0' }}*/}
+            {/*/>*/}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span>地块名称：{data.landName}</span>
               <span>任务名称：{data.taskName}</span>
               <span>执行状态：{data.execStatus}</span>
             </div>
+            <Table
+              key={'id'}
+              columns={columnsModal}
+              dataSource={data}
+              pagination={false}
+            />
           </Col>
           <Col flex='auto'>
             <Map styles={{ height: '600px' }} complete={setComplete} ref={mapRef} />
