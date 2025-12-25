@@ -96,7 +96,7 @@ export default function Crew() {
     if (loading || !hasMore) return;
     setLoading(true);
     try {
-      const info = await robotPage({page: pages, pageSize: 10});
+      const info = await robotPage({current: pages, pageSize: 10});
       const {
         data: { records, total },
       } = info;
@@ -148,7 +148,7 @@ export default function Crew() {
 
   useEffect(() => {
     // form.setFieldsValue({ robotList: list });
-    loadData(0)
+    loadData(1)
   }, []);
 
   return (
@@ -230,9 +230,8 @@ export default function Crew() {
         }}
       />
 
-
       <Modal
-        title="新增机组"
+        title='新增机组'
         open={open}
         onCancel={() => setOpen(false)}
         footer={null}
@@ -246,41 +245,55 @@ export default function Crew() {
           form={form}
           clearOnDestroy
         >
-          <Form.Item label='机组名称' rules={[{ required: true, message: '请输入机组名称' }]} name="name">
-            <Input />
-          </Form.Item>
-          <Form.Item label='无人机编号' rules={[{ required: true, message: '请输入无人机编号' }]} name="uavCode">
+          <Form.Item
+            label='机组名称'
+            rules={[{ required: true, message: '请输入机组名称' }]}
+            name='name'
+          >
             <Input />
           </Form.Item>
           <Form.Item
-            label="机器人列表"
-            name="robotIds"
+            label='无人机编号'
+            rules={[{ required: true, message: '请输入无人机编号' }]}
+            name='uavCode'
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label='机器人列表'
+            name='robotIds'
             rules={[
-              { required: true, message: '请至少选择一个机器人' },
               {
                 validator: (_, value) => {
                   if (!value || value.length === 0) {
                     return Promise.reject(new Error('请至少添加一个机器人'));
                   }
                   return Promise.resolve();
-                },
-              },
+                }
+              }
             ]}
           >
             <Select
-              mode="multiple"
+              mode='multiple'
               options={list}
               onPopupScroll={handlePopupScroll}
               loading={loading}
               showSearch={false}
-              placeholder="请选择机器人"
+              placeholder='请选择机器人'
             />
           </Form.Item>
           <Form.Item label={null}>
-            <Button type="primary" htmlType="submit">
+            <Button type='primary' htmlType='submit'>
               确定
             </Button>
-            <Button htmlType="button" style={{ marginLeft: 8 }} onClick={() => form.resetFields()}>
+            <Button
+              htmlType='button'
+              style={{ marginLeft: 8 }}
+              onClick={() => {
+                setOpen(false)
+                form.resetFields();
+              }}
+            >
               取消
             </Button>
           </Form.Item>

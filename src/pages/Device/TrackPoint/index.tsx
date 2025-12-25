@@ -1,6 +1,6 @@
 import { ProColumns, ProTable } from '@ant-design/pro-components';
 import { history } from '@@/core/history';
-import { Button, Col, Divider, message, Popconfirm, Row, Space, Table } from 'antd';
+import { Col, Divider, message, Popconfirm, Row, Space, Table } from 'antd';
 import React, { useRef, useState } from 'react';
 import { getList, del } from '@/pages/Device/TrackPoint/service';
 import TreeCard from '@/pages/components/Tree';
@@ -35,10 +35,12 @@ const TrackPoint = () => {
       dataIndex: 'pointType',
       width: 270,
       ellipsis: true,
-      search: false,
       render: (_: any, entity: any) => {
         return Option[entity.pointType];
-      }
+      },
+      valueEnum: Object.fromEntries(
+        Object.entries(Option).map(([key, label]) => [key, { text: label }])
+      )
     },
     {
       title: '经度',
