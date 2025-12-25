@@ -109,7 +109,6 @@ export default [
       {
         name: '工单日志',
         path: '/task/orderLog',
-        component: './Task/OrderLog',
         routes: [
           {
             path: '/task/orderLog',
@@ -121,7 +120,7 @@ export default [
           },
           {
             path: '/task/orderLog/subLog',
-            component: './Task/OrderLog',
+            component: './Task/OrderLog/SubLog',
           }
         ]
       },

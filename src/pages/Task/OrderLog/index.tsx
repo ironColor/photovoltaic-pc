@@ -5,6 +5,7 @@ import { page, cruise } from './service';
 import Map from '@/pages/components/Map';
 import { Badge, Col, Modal, Row, Statistic, Table, type TableProps, Tag } from 'antd';
 import { taskType } from '@/pages/components/Common';
+import { history } from '@@/core/history';
 
 const Log: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -14,10 +15,6 @@ const Log: React.FC = () => {
   const mapRef = useRef<any>();
   const [complete, setComplete] = useState(false);
 
-  useEffect(() => {
-    id && cruise(id).then(res => setData(res.data));
-    complete && mapRef.current?.log(data?.[0]?.planInfos);
-  }, [id, complete]);
 
   const columns: ProColumns<any>[] = [
     {
@@ -79,14 +76,18 @@ const Log: React.FC = () => {
       render: (_, row) => (
         <a
           onClick={() => {
-            setOpen(true);
-            setId(row.id);
-            setNames({
-              areaName: row.areaName,
-              parentTaskName: row.parentTaskName,
-              execStartTime: row.execStartTime,
-              execStatus: row.execStatus
+            history.push({
+              pathname: `/task/orderLog/subLog`,
+              search: `?id=${encodeURIComponent(row?.id)}`
             });
+            // setOpen(true);
+            // setId(row.id);
+            // setNames({
+            //   areaName: row.areaName,
+            //   parentTaskName: row.parentTaskName,
+            //   execStartTime: row.execStartTime,
+            //   execStatus: row.execStatus
+            // });
           }}
         >
           查看

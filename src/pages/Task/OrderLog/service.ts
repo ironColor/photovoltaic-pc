@@ -7,16 +7,18 @@ export const page = async (params: object) => {
   });
 };
 
-export const cruise = async (id: number) => {
+export const cruise = async (id: any) => {
   return request<API.R<any>>(`/ppc/workOrder/log/subTaskLog/${id}`, {
     method: 'GET'
   });
 };
 
 
-export const subLog = async (id: any) => {
-  return request<API.R<any>>(`/ppc/workOrder/log/subTaskLog/${id}`, {
+export const commandTaskLog = async (id: any) => {
+  return request<API.R<any>>(`/ppc/workOrder/log/commandTaskLog/${id}`, {
     method: 'GET'
   });
 }
+
+
 
