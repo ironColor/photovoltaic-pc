@@ -1,14 +1,43 @@
-import React, { useRef, useState } from 'react';
-import { Button, Col, Divider, message, Popconfirm, Row, Space, Table } from 'antd';
+import React, { useEffect, useRef, useState } from 'react';
+import { Button, Col, Divider, message, Modal, Popconfirm, Row, Space, Table } from 'antd';
 import { ProColumns, ProTable } from '@ant-design/pro-components';
 import { history } from '@@/core/history';
-import { del, page } from './service';
+import { del, getWorkList, page } from './service';
 import { PlusOutlined } from '@ant-design/icons';
 import TreeCard from '@/pages/components/Tree';
+
+const taskTypeMap = {
+  0: '喷洒',
+  2: '投放',
+  3: '回收',
+  4: '转移',
+  5: '割草',
+  6: '巡检'
+};
+
+function formatTime(seconds: number) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 
 const WorkOrder: React.FC = () => {
   const formRef = useRef<any>();
   const [areaId, setAreaId] = useState<number>();
+  const [open, setOpen] = useState(false);
+  const [data, setData] = useState();
+  const [id, setID] = useState();
+
+  useEffect(() => {
+    if (id) {
+      getWorkList({id}).then((res: any) => {
+        setData(res.data);
+      })
+    }
+  }, [id]);
 
   const columns: ProColumns<Land.Item>[] = [
     {
@@ -23,7 +52,7 @@ const WorkOrder: React.FC = () => {
       width: 100,
       ellipsis: true,
       search: false,
-      render: (text, record) => {
+      render: (text, record: any) => {
         return record.orderType === 1 ? '干洗' : '水洗'
       }
     },
@@ -92,17 +121,6 @@ const WorkOrder: React.FC = () => {
               编辑
             </a>
             <Divider type='vertical' />
-            <a
-              onClick={() => {
-                history.push({
-                  pathname: `/task/workOrder/execute`,
-                  search: `?id=${encodeURIComponent(text?.orderId)}`
-                });
-              }}
-            >
-              执行
-            </a>
-            <Divider type='vertical' />
             <Popconfirm
               title='确认删除?'
               okText='确认'
@@ -122,10 +140,8 @@ const WorkOrder: React.FC = () => {
             <Divider type='vertical' />
             <a
               onClick={() => {
-                history.push({
-                  pathname: `/task/workOrder/subTask`,
-                  search: `?id=${encodeURIComponent(text?.orderId)}`
-                });
+                setOpen(true);
+                setID(text?.orderId);
               }}
             >
               任务列表
@@ -133,6 +149,62 @@ const WorkOrder: React.FC = () => {
           </>
         );
       }
+    }
+  ];
+
+  const columnsModal = [
+    {
+      title: '任务名称',
+      dataIndex: 'taskName',
+      width: 200,
+      ellipsis: true,
+      search: false
+    },
+    {
+      title: '任务类型',
+      dataIndex: 'taskType',
+      ellipsis: true,
+      search: false,
+      render: (_: any, entity: any) => {
+        //@ts-ignore
+        return taskTypeMap[entity.taskType];
+      }
+    },
+    {
+      title: '机器人编码',
+      dataIndex: 'robotCode',
+      width: 150,
+      ellipsis: true,
+      search: false
+    },
+    {
+      title: '地块名称',
+      dataIndex: 'landName',
+      width: 200,
+      ellipsis: true,
+      search: false
+    },
+    {
+      title: "上一地块",
+      dataIndex: 'oldLandName',
+      ellipsis: true,
+      search: false
+    },
+    {
+      title: '等待时间',
+      dataIndex: 'waitingTime',
+      width: 200,
+      ellipsis: true,
+      search: false,
+      render: (text: number) => {
+        return formatTime(text)
+      }
+    },
+    {
+      title: "生成时间",
+      dataIndex: 'generateTime',
+      ellipsis: true,
+      search: false
     }
   ];
 
@@ -182,7 +254,6 @@ const WorkOrder: React.FC = () => {
             </Button>
           ]}
           rowSelection={{
-            // https://ant.design/components/table-cn/#components-table-demo-row-selection-custom
             selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT]
           }}
           tableAlertRender={({ selectedRowKeys, onCleanSelected }) => {
@@ -222,6 +293,23 @@ const WorkOrder: React.FC = () => {
             );
           }}
         />
+
+        <Modal
+          title={'任务列表'}
+          open={open}
+          onCancel={() => setOpen(false)}
+          footer={null}
+          width={'90%'}
+          destroyOnHidden
+        >
+          <Table
+            key={'id'}
+            columns={columnsModal}
+            dataSource={data}
+            pagination={false}
+          />
+        </Modal>
+
       </Col>
     </Row>
   )

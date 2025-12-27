@@ -37,9 +37,12 @@ const WorkOrder: React.FC = () => {
     {
       title: '机组名称',
       dataIndex: 'uavConfigName',
-      width: 100,
+      width: 150,
       ellipsis: true,
-      search: false
+      search: false,
+      render: (text, record: any) => {
+        return `${record.uavConfigName} (${record.uavCode})`
+      }
     },
     {
       title: '起飞点',

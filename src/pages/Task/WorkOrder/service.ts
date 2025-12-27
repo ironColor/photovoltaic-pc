@@ -142,3 +142,10 @@ export const commandApi = async (body: any) => {
     data: body
   })
 }
+
+export const getParameter = async (params: any) => {
+  return request<API.R<any>>('/parameter/page', {
+    params,
+    method: 'GET'
+  });
+}

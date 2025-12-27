@@ -130,7 +130,7 @@ export default [
         component: './Task/Subtask'
       },
       {
-        name: '工单监控',
+        name: '工单执行',
         path: '/task/workMonitor',
         routes: [
           {
@@ -144,7 +144,7 @@ export default [
         ]
       },
       {
-        name: '工单管理',
+        name: '工单设计',
         path: '/task/workOrder',
         routes: [
           {

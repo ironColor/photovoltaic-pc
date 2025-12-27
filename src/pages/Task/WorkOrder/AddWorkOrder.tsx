@@ -8,14 +8,14 @@ import { landType } from '@/pages/components/Common';
 import { useSearchParams } from '@@/exports';
 import {
   detailInfo,
-  getGroupList,
+  getGroupList, getParameter,
   getPointOptions,
   getTime,
   saveInfo,
   tree, updateInfo
 } from '@/pages/Task/WorkOrder/service';
 
-function isArray(value) {
+function isArray(value: any) {
   return Array.isArray(value);
 }
 
@@ -36,6 +36,7 @@ export default function AddWorkOrder( ) {
   const [robotOptions, setRobotOptions] = useState<any[]>([]);
   const [robotsId, setRobotsId] = useState<any[]>([]);
   const [updateLandsId, setUpdateLandsId] = useState<any[]>([]);
+  const [k, setK] = useState();
 
   const handleColumns = useCallback((simple: boolean) => {
     if (simple) {
@@ -51,13 +52,6 @@ export default function AddWorkOrder( ) {
           width: 200,
           ellipsis: true
         },
-        // {
-        //   title: '类型',
-        //   dataIndex: 'landType',
-        //   width: 90,
-        //   renderText: (text: number) => <Tag color={'processing'}>{landType[+text]}</Tag>,
-        //   valueEnum: landType
-        // },
         {
           title: '操作',
           width: 50,
@@ -189,7 +183,7 @@ export default function AddWorkOrder( ) {
   }, [])
 
   const isSlopeTooLarge = (record: any) => {
-    return Math.abs(record.k) > 20;
+    return Math.abs(record.k) > Number(k);
   };
 
   const addLand = (newItems: any[]) => {
@@ -198,13 +192,7 @@ export default function AddWorkOrder( ) {
       ...item,
       sort: index + landData.length,
     }));
-    const isUpdate = !!searchParams.get('orderId')
-
-      if (isUpdate) {
-          setUpdateLandsId([...updateLandsId, ...uniqueNewItems.map(item => item.landId)])
-      } else {
-          setLandData(prev => [...prev, ...uniqueNewItems]);
-      }
+    setLandData(prev => [...prev, ...uniqueNewItems]);
 
   }
 
@@ -220,12 +208,12 @@ export default function AddWorkOrder( ) {
     message.success('修改列表排序成功');
   };
 
-  const handleLandNameChange = useCallback((value, option) => {
+  const handleLandNameChange = useCallback((value: any, option: any) => {
     setLandId(option.areaId)
   }, []);
 
-  const handleGroupChange = useCallback((value, option) => {
-    setRobotOptions(option.robots.map(item => ({
+  const handleGroupChange = useCallback((value: any, option: any) => {
+    setRobotOptions(option.robots.map((item: any) => ({
       ...item,
       label: item.robotCode,
       value: item.robotId
@@ -255,7 +243,7 @@ export default function AddWorkOrder( ) {
 
     if(orderId) {
       updateInfo({...value, robotIds: robotsId, landIds: updateLandsId, orderId }).then(res => {
-        const { code, msg, data } = res;
+        const { code, msg } = res;
         if (code !== 0) {
           message.error(msg || '创建失败');
           return;
@@ -265,14 +253,15 @@ export default function AddWorkOrder( ) {
         }
       })
     } else {
-      saveInfo({ ...value, robotIds: form.getFieldValue('robotIds'), landIds: value.landIds.map(item => item.landId) }).then(res => {
-        const { code, msg, data } = res;
+      saveInfo({ ...value, robotIds: form.getFieldValue('robotIds'), landIds: value.landIds.map((item: any) => item.landId) }).then(res => {
+        const { code, msg } = res;
         if (code !== 0) {
           message.error(msg || '创建失败');
           return;
         } else {
           message.success('提交成功');
           form.resetFields();
+          history.go(-1)
         }
       });
     }
@@ -335,6 +324,22 @@ export default function AddWorkOrder( ) {
     };
 
     fetchData();
+
+
+    getParameter({
+      current: 1,
+      pageSize: 10,
+      parameterCode: 'slope'
+    }).then(res => {
+      const { code, msg, data } = res;
+      if (code !== 0) {
+        message.error(msg || '获取斜率失败');
+        return;
+      } else {
+        const { records } = data
+        setK(records[0].parameterValue)
+      }
+    })
   }, []);
 
   useEffect(() => {
@@ -346,9 +351,9 @@ export default function AddWorkOrder( ) {
 
   useEffect(() => {
       if (landId) {
-        getPointOptions({ areaId: landId, type: 10}).then(res => {
+        getPointOptions({ areaId: landId, type: 10}).then((res: any) => {
           if (isArray(res)) {
-            const options = res.map(item => ({
+            const options = res.map((item: any) => ({
               label: item.pointName,
               value: item.pointId,
               ...item
@@ -358,9 +363,9 @@ export default function AddWorkOrder( ) {
             message.error('下拉框数据获取失败');
           }
         })
-        getPointOptions({ areaId: landId, type: 7}).then(res => {
+        getPointOptions({ areaId: landId, type: 7}).then((res: any) => {
           if (isArray(res)) {
-            const options = res.map(item => ({
+            const options = res.map((item: any) => ({
               label: item.pointName,
               value: item.pointId,
               ...item
@@ -370,9 +375,9 @@ export default function AddWorkOrder( ) {
             message.error('下拉框数据获取失败');
           }
         })
-        getPointOptions({ areaId: landId, type: 8}).then(res => {
+        getPointOptions({ areaId: landId, type: 8}).then((res: any) => {
           if (isArray(res)) {
-            const options = res.map(item => ({
+            const options = res.map((item: any) => ({
               label: item.pointName,
               value: item.pointId,
               ...item
@@ -382,19 +387,19 @@ export default function AddWorkOrder( ) {
             message.error('下拉框数据获取失败');
           }
         })
-        getGroupList({ name: '', uavCode: '' }).then(res => {
+        getGroupList({ name: '', uavCode: '' }).then((res: any) => {
           const { code, msg, data } = res;
           if (code !== 0) {
             message.error(msg || '机组数据获取失败');
             return;
           }
-          const options = data.map(item => ({
+          const options = data.map((item: any) => ({
             label: item.name,
             value: item.id,
             ...item
           }))
 
-          const robotList = options.filter(item => item.id === form.getFieldValue('uavConfigId'))[0]?.robots.map(item => ({
+          const robotList = options.filter((item: any) => item.id === form.getFieldValue('uavConfigId'))[0]?.robots.map((item: any) => ({
             ...item,
             label: item.robotCode,
             value: item.robotId
@@ -405,8 +410,6 @@ export default function AddWorkOrder( ) {
       }
     }, [landId]);
 
-  const isUpdate = !!searchParams.get('orderId')
-
   return (
     <Row gutter={32} style={{ background: '#fff'}}>
       <Col flex='650px'>
@@ -414,29 +417,13 @@ export default function AddWorkOrder( ) {
       </Col>
       <Col flex='auto'>
         <div style={{ padding: '24px'}}>
-          <h1>新增工单</h1>
+          <h1>{!!searchParams.get('orderId') ? '修改工单' : '新增工单'}</h1>
           <Form
             labelCol={{ span: 8 }}
             wrapperCol={{ span: 16 }}
             style={{ maxWidth: 600 }}
             form={form}
             onFinish={onFinish}
-            // onValuesChange={(changedValues, allValues) => {
-            //   const { orderType, landIds, uavConfigId } = allValues;
-            //
-            //   // 判断三个字段是否都有值
-            //   if (
-            //     orderType !== undefined &&
-            //     orderType !== null &&
-            //     landIds &&
-            //     landIds.length > 0 &&
-            //     uavConfigId !== undefined &&
-            //     uavConfigId !== null
-            //   ) {
-            //     // 触发你的计算逻辑
-            //     handleCalculate(orderType, landIds, uavConfigId);
-            //   }
-            // }}
           >
             <Form.Item label='场地名称' rules={[{ required: true, message: '请选择场地名称' }]} name="areaId">
               <Select
@@ -515,39 +502,40 @@ export default function AddWorkOrder( ) {
                 options={robotOptions}
                 showSearch={false} // 如果不需要搜索可关闭
                 placeholder="请选择机器人"
-                // onChange={handleGroupChange}
               />
             </Form.Item>
-            <Form.Item label="清洗时间" name="estimatedWorkTime">
-              <Input disabled={true} />
+            <Form.Item label="清洗时间" name="estimatedWorkTime" rules={[{ required: true, message: '请获取清洗时间' }]}>
+              <Space>
+                <Input disabled={true} />
+                <Button type="primary" onClick={getTimeClick}>获取</Button>
+              </Space>
             </Form.Item>
             <Form.Item label="起飞点" rules={[{ required: true, message: '请选起飞点' }]} name="takeoffPointId">
               <Select
                 options={start}
                 showSearch={false} // 如果不需要搜索可关闭
-                placeholder="请选择工单类型"
+                placeholder="请选择起飞点"
               />
             </Form.Item>
             <Form.Item label="挂载点" rules={[{ required: true, message: '请选挂载点' }]} name="mountPointId">
               <Select
                 options={pull}
                 showSearch={false} // 如果不需要搜索可关闭
-                placeholder="请选择工单类型"
+                placeholder="请选择挂载点"
               />
             </Form.Item>
             <Form.Item label="卸载点" rules={[{ required: true, message: '请选卸载点' }]} name="uploadPointId">
               <Select
                 options={unPull}
                 showSearch={false} // 如果不需要搜索可关闭
-                placeholder="请选择工单类型"
+                placeholder="请选择卸载点"
               />
             </Form.Item>
             <Form.Item label={null}>
-              <Button type="primary"  onClick={getTimeClick}>获取清洗时间</Button>
               <Button type="primary" htmlType="submit"  style={{ marginLeft: 8 }}>
                 确定
               </Button>
-              <Button htmlType="button" style={{ marginLeft: 8 }} onClick={() => form.resetFields()}>
+              <Button htmlType="button" style={{ marginLeft: 8 }} onClick={() => history.go(-1)}>
                 取消
               </Button>
             </Form.Item>
@@ -610,7 +598,7 @@ export default function AddWorkOrder( ) {
                   <Space size={16}>
                     <a onClick={() => {
                       setOpen(false)
-                      addLand(selectedRows)
+                      addLand(selectedRows.reverse())
                     }}>
                       添加
                     </a>

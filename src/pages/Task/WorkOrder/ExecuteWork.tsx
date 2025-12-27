@@ -1,4 +1,4 @@
-import { Button, Card, Col, Collapse, message, Radio, Row, Space, Tooltip } from 'antd';
+import { Badge, Button, Card, Col, Collapse, message, Radio, Row, Space, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from '@@/exports';
 import Map from '@/pages/components/Map';
@@ -8,257 +8,6 @@ import { useWebSocket } from 'ahooks';
 import { config } from '../../../../public/scripts/config';
 import { getCurrentUser } from '@/utils/authority';
 import { execute } from '@/pages/Task/Monitor/service';
-
-const DemoData = [
-  {
-    id: 1,
-    name: '地块1',
-    robot: 1,
-    taskList: [
-      {
-        name: '投放',
-        error: 'E0',
-        pathList: [
-          {
-            name: '起飞点'
-          },
-          {
-            name: '投放点'
-          }
-        ]
-      },
-      {
-        name: '回收',
-        error: '',
-        pathList: [
-          {
-            name: '起飞点'
-          },
-          {
-            name: '投放点'
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: 2,
-    name: '地块2',
-    robot: 2,
-    taskList: [
-      {
-        name: '投放',
-        error: '',
-        pathList: [
-          {
-            name: '起飞点'
-          },
-          {
-            name: '投放点'
-          }
-        ]
-      },
-      {
-        name: '回收',
-        error: '',
-        pathList: [
-          {
-            name: '起飞点'
-          },
-          {
-            name: '投放点'
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: 3,
-    name: '地块3',
-    robot: 3,
-    taskList: [
-      {
-        name: '投放',
-        error: '',
-        pathList: [
-          {
-            name: '起飞点'
-          },
-          {
-            name: '投放点'
-          }
-        ]
-      },
-      {
-        name: '回收',
-        error: '',
-        pathList: [
-          {
-            name: '起飞点'
-          },
-          {
-            name: '投放点'
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: 4,
-    name: '地块4',
-    robot: 4,
-    taskList: [
-      {
-        name: '投放',
-        error: 'E0',
-        pathList: [
-          {
-            name: '起飞点'
-          },
-          {
-            name: '投放点'
-          }
-        ]
-      },
-      {
-        name: '回收',
-        error: '',
-        pathList: [
-          {
-            name: '起飞点'
-          },
-          {
-            name: '投放点'
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: 5,
-    name: '地块5',
-    robot: 5,
-    taskList: [
-      {
-        name: '投放',
-        error: '',
-        pathList: [
-          {
-            name: '起飞点'
-          },
-          {
-            name: '投放点'
-          }
-        ]
-      },
-      {
-        name: '回收',
-        error: '',
-        pathList: [
-          {
-            name: '起飞点'
-          },
-          {
-            name: '投放点'
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: 6,
-    name: '地块6',
-    robot: 6,
-    taskList: [
-      {
-        name: '投放',
-        error: '',
-        pathList: [
-          {
-            name: '起飞点'
-          },
-          {
-            name: '投放点'
-          }
-        ]
-      },
-      {
-        name: '回收',
-        error: '',
-        pathList: [
-          {
-            name: '起飞点'
-          },
-          {
-            name: '投放点'
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: 7,
-    name: '地块7',
-    robot: 7,
-    taskList: [
-      {
-        name: '投放',
-        error: '',
-        pathList: [
-          {
-            name: '起飞点'
-          },
-          {
-            name: '投放点'
-          }
-        ]
-      },
-      {
-        name: '回收',
-        error: '',
-        pathList: [
-          {
-            name: '起飞点'
-          },
-          {
-            name: '投放点'
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: 8,
-    name: '地块8',
-    robot: 8,
-    taskList: [
-      {
-        name: '投放',
-        error: '',
-        pathList: [
-          {
-            name: '起飞点'
-          },
-          {
-            name: '投放点'
-          }
-        ]
-      },
-      {
-        name: '回收',
-        error: '',
-        pathList: [
-          {
-            name: '起飞点'
-          },
-          {
-            name: '投放点'
-          }
-        ]
-      }
-    ]
-  },
-]
 
 export default function ExecuteWork() {
   let mapRef = React.createRef<{ execute?: (position: any[], air?: [number, number]) => void }>();
@@ -280,10 +29,7 @@ export default function ExecuteWork() {
         }
         setDataArr(data.landInfos)
       })
-    } else {
-      message.error('无主任务日志id')
     }
-
   }, [orderLogId])
 
 
@@ -369,7 +115,7 @@ export default function ExecuteWork() {
 
   const command = useCallback(async (c: number) => {
     const orderId = searchParams.get('id');
-    const { code, msg } = await commandApi({ commandCode: c, workOrderId: orderId, subTaskId: subTaskId });
+    const { code, msg } = await commandApi({ commandCode: c, workOrderId: Number(orderId), subTaskId: subTaskId });
     if (code !== 0) {
       message.error(msg || '执行失败');
       return null;
@@ -463,7 +209,7 @@ export default function ExecuteWork() {
                 dataArr?.map((item, index) => <div style={{ width: '90%'}} key={index}>
                   <div>
                     {item.landName}
-                    {` 机器人${item.robotCode}`}
+                    ({` 机器人${item.robotCode}`})
                   </div>
                   <Collapse size="small" defaultActiveKey={colKey} onChange={(key) => setColKey([...colKey, ...key])}>
                     {
@@ -484,7 +230,23 @@ export default function ExecuteWork() {
                           }
                       </Radio>}>
                         <div style={{ marginLeft: 10 }}>
-                          {task.commandTasks.map(item => item.execStatus).join(' -> ')}
+                          {task.commandTasks.map((item: any, index: number) =>  {
+                            let status
+                            if (item.execStatus === '已完成') {
+                              status = 'success'
+                            } else if (item.execStatus === '中断') {
+                              status = 'error'
+                            } else  {
+                              status = 'default'
+                            }
+
+                            return <>
+                              <Badge key={item.serial} status={status} text={item.execStatus} />
+                              {
+                                index !== task.commandTasks.length - 1 && '->'
+                              }
+                            </>
+                          })}
                         </div>
                       </Panel>)
                     }
