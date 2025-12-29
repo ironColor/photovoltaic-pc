@@ -263,6 +263,8 @@ const Map: React.ForwardRefRenderFunction<
       return '#f3ac00';
     } else if (execStatus === '失败' || execStatus === '中断' || execStatus === '取消') {
       return 'rgb(255,102,102)';
+    } else {
+      return '#BFBFBF';
     }
   };
 

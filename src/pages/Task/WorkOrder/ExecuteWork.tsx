@@ -1,4 +1,16 @@
-import { Badge, Button, Card, Col, Collapse, message, Radio, Row, Space, Tooltip } from 'antd';
+import {
+  Badge,
+  Button,
+  Card,
+  Col,
+  Collapse,
+  message,
+  Modal,
+  Radio,
+  Row,
+  Space,
+  Tooltip
+} from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from '@@/exports';
 import Map from '@/pages/components/Map';
@@ -8,6 +20,8 @@ import { useWebSocket } from 'ahooks';
 import { config } from '../../../../public/scripts/config';
 import { getCurrentUser } from '@/utils/authority';
 import { execute } from '@/pages/Task/Monitor/service';
+import { ExclamationCircleFilled } from '@ant-design/icons';
+import { taskType } from '@/pages/components/Common';
 
 export default function ExecuteWork() {
   let mapRef = React.createRef<{ execute?: (position: any[], air?: [number, number]) => void }>();
@@ -27,8 +41,16 @@ export default function ExecuteWork() {
           message.error(msg || '获取失败');
           return;
         }
-        setDataArr(data.landInfos)
+        const formatData = data?.landInfos?.map(item => {
+          return {
+            ...item,
+            execStatus: item.subTasks[0]?.execStatus
+          }
+        })
+        setDataArr(formatData)
       })
+    } else {
+      message.error('不存在orderLogId，无法刷新列表')
     }
   }, [orderLogId])
 
@@ -126,7 +148,7 @@ export default function ExecuteWork() {
   }, [subTaskId]);
 
 
-  const speak = (text: string) => {
+  const speak = (text: any) => {
     // 创建语音实例
     const utterance = new SpeechSynthesisUtterance(text);
 
@@ -140,9 +162,19 @@ export default function ExecuteWork() {
     window.speechSynthesis.speak(utterance);
   };
 
-  const onStart = () => {
-    speak(select)
-  }
+  /**
+   * 取消任务
+   */
+  const cancel = useCallback(async () => {
+    Modal.confirm({
+      title: '确定要取消当前任务吗？',
+      icon: <ExclamationCircleFilled />,
+      onOk() {
+        command(24);
+        history.go(0);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const orderId = searchParams.get('id');
@@ -152,7 +184,14 @@ export default function ExecuteWork() {
         message.error(msg || '获取失败');
         return;
       }
-      setDataArr(data.landInfos)
+      setDataArr(data.landInfos);
+
+      (window as any).mapRef(data?.landInfos?.map(item => {
+        return {
+          ...item,
+          execStatus: item.subTasks[0]?.execStatus
+        }
+      }));
       setOrderLogId(data.orderLogId)
     })
   }, [searchParams])
@@ -165,7 +204,7 @@ export default function ExecuteWork() {
     if (complete) {
       // 建立Websocket连接
       execWS?.connect && execWS?.connect();
-
+      console.log(11111);
       // 执行地图数据初始化
       mapRef.current?.execute?.(dataArr);
     }
@@ -176,6 +215,20 @@ export default function ExecuteWork() {
       console.log('Websocket断开连接~');
     };
   }, [complete]);
+
+  const onStart = async () => {
+    if (subTaskId) {
+      Modal.confirm({
+        title: '确定要启动当前任务吗？',
+        onOk() {
+          command(21);
+        }
+      });
+    } else {
+      message.error('请选择子任务')
+    }
+
+  }
 
   return (
     <Card
@@ -190,11 +243,14 @@ export default function ExecuteWork() {
           >
             自检
           </Button>
-          <Button type={'primary'} onClick={() => command(21)}>
+          <Button type={'primary'} onClick={onStart}>
             启动
           </Button>
           <Button type='primary' danger onClick={() => command(22)}  >
             急停
+          </Button>
+          <Button type='primary' danger onClick={cancel}>
+            取消
           </Button>
           <Button onClick={() => history.back()}>返回</Button>
         </Space>
@@ -215,9 +271,11 @@ export default function ExecuteWork() {
                     {
                       item.subTasks.map((task, index) =>  <Panel
                         key={`${item.name}-${index}`}
-                        header={<Radio checked={select === `${task.taskName}机器人${item?.robot}号`} onChange={() => {
-                          setSelect(`${task.taskName}机器人${item?.robot}号`)
+                        header={<Radio checked={select === `${task.taskName}-${index}`} onChange={() => {
+                          speak(`执行任务${task.taskName}，机器人${item?.robotCode}${taskType[task.taskType]}至${item.landName}`.replace(/(\d+)-(\d+)-(\d+)/g, '$1杠$2杠$3'))
                           setSubTaskId(task.subtaskId)
+                          setSelect(`${task.taskName}-${index}`)
+                          setColKey([...colKey, `${item.name}-${index}`])
                         }} >
                           {`${task.taskName}`}
                           {
