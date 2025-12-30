@@ -45,6 +45,12 @@ const WorkOrder: React.FC = () => {
       }
     },
     {
+      title: '执行状态',
+      dataIndex: 'execStatus',
+      ellipsis: true,
+      search: false
+    },
+    {
       title: '起飞点',
       dataIndex: 'takeoffPointName',
       ellipsis: true,
@@ -126,16 +132,6 @@ const WorkOrder: React.FC = () => {
             return { data: records, success: !code, total: total };
           }}
           dateFormatter='string'
-          toolBarRender={() => [
-            <Button
-              key='button'
-              icon={<PlusOutlined />}
-              onClick={() => history.push('/task/workOrder/add')}
-              type='primary'
-            >
-              新增
-            </Button>
-          ]}
           rowSelection={{
             selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT]
           }}

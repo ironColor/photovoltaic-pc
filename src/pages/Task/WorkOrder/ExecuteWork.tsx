@@ -8,11 +8,11 @@ import {
   Modal,
   Radio,
   Row,
-  Space,
+  Space, Statistic, Timeline,
   Tooltip
 } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams, useSearchParams } from '@@/exports';
+import { useSearchParams } from '@@/exports';
 import Map from '@/pages/components/Map';
 import { Panel } from 'rc-collapse';
 import { commandApi, workOrderExcute, workOrderImmediate } from '@/pages/Task/WorkOrder/service';
@@ -20,18 +20,41 @@ import { useWebSocket } from 'ahooks';
 import { config } from '../../../../public/scripts/config';
 import { getCurrentUser } from '@/utils/authority';
 import { execute } from '@/pages/Task/Monitor/service';
-import { ExclamationCircleFilled } from '@ant-design/icons';
-import { taskType } from '@/pages/components/Common';
+import { ExclamationCircleFilled, LoadingOutlined } from '@ant-design/icons';
+import { dotType, level, taskType } from '@/pages/components/Common';
+import styles from '@/pages/Task/Monitor/Execute.less';
+import OperationButton from '@/pages/Task/Monitor/components/Operation/Operation';
+import p1 from '/public/picture/01.png';
+import p2 from '/public/picture/02.png';
+import p3 from '/public/picture/03.png';
+import p4 from '/public/picture/04.png';
+import p5 from '/public/picture/05.png';
+import p6 from '/public/picture/06.png';
+import p7 from '/public/picture/07.png';
+import p8 from '/public/picture/08.png';
+import Block from '@/pages/Task/Monitor/components/Block';
+import Display from '@/pages/Task/Monitor/components/Display';
+import { useEmotionCss } from '@ant-design/use-emotion-css';
 
 export default function ExecuteWork() {
   let mapRef = React.createRef<{ execute?: (position: any[], air?: [number, number]) => void }>();
   const [complete, setComplete] = useState(false);
   const [dataArr, setDataArr] = useState<any[]>([]);
-  const [colKey, setColKey] = useState<any[]>([]);
+  const [colKey, setColKey] = useState<any[]>([201]);
   const [select, setSelect] = useState<string>();
   const [subTaskId, setSubTaskId] = useState<string>();
   const [searchParams] = useSearchParams();
   const [orderLogId, setOrderLogId] = useState();
+  const [text, setText] = useState<string>();
+  // 设备信息
+  const [info, setInfo] = useState<any>({});
+  const [timeLine, setTimeline] = useState<any>();
+  const lineItemStyle = useEmotionCss(() => ({
+    '.ant-timeline-item-last': {
+      'padding-bottom': '0',
+      'margin-bottom': '-24px'
+    }
+  }));
 
   const call = useCallback(() => {
     if (orderLogId) {
@@ -41,7 +64,7 @@ export default function ExecuteWork() {
           message.error(msg || '获取失败');
           return;
         }
-        const formatData = data?.landInfos?.map(item => {
+        const formatData = data?.landInfos?.map((item: any) => {
           return {
             ...item,
             execStatus: item.subTasks[0]?.execStatus
@@ -77,6 +100,8 @@ export default function ExecuteWork() {
       if (data.commandCode === 30) {
         // 飞机实时位置
         (window as any).mapRef(dataArr, [data.lon, data.lat]);
+        // 更新卫星数、RTK状态、电压等
+        setInfo(data);
       } else if (data.commandCode === 31) {
         // 自检成功，获取镜头角度参数
         execute({ commandCode: 25 });
@@ -176,6 +201,102 @@ export default function ExecuteWork() {
     });
   }, []);
 
+  const execStatus = useCallback((status: string) => {
+    const statusColors: Record<string, string> = {
+      待执行: 'gray',
+      可执行: 'gray',
+      执行中: '#1677ff',
+      已完成: '#1677ff',
+      失败: 'red',
+      中断: 'red',
+      取消: 'red'
+    };
+    // 默认返回一个颜色，防止未知状态
+    return statusColors[status] || 'red';
+  }, []);
+
+
+  useEffect(() => {
+    if (dataArr.length > 0) {
+      setTimeline(dataArr.map((item: any) => {
+        item.execStatus = item.subTasks[0]?.execStatus;
+
+        return {
+          children: (
+            <>
+              <b>
+                <Tooltip
+                  placement='top'
+                  title={item.execStatus === '可执行' ? '可执行当前任务' : ''}
+                >
+                  {item.execStatus === '可执行' && (
+                    <Badge status='processing' style={{ marginRight: '8px' }} />
+                  )}
+                </Tooltip>
+                {item.taskName}
+              </b>
+              <div
+                className={styles.code}
+                style={{ display: item.robotCode ? 'inline-block' : 'none' }}
+              >
+                {item.landName}
+                ({` 机器人${item.robotCode}`})
+                <div className={styles.closeIcon} onClick={() => stop(item.robotCode)}>
+                  ×
+                </div>
+              </div>
+              {
+                item.subTasks?.length > 0 && <Collapse size="small" defaultActiveKey={colKey} onChange={(key) => setColKey([...colKey, ...key])}>
+                  {
+                    item.subTasks.map((task: any, index: number) =>  <Panel
+                      key={task.subtaskId}
+                      header={<Radio checked={subTaskId ===  task.subtaskId} onChange={() => {
+                        setText(`执行任务${task.taskName}，机器人${item?.robotCode}${taskType[task.taskType]}至${item.landName}`.replace(/(\d+)-(\d+)-(\d+)/g, '$1杠$2杠$3'))
+                        setSubTaskId(task.subtaskId)
+                        setSelect(`${task.taskName}-${index}`)
+                        setColKey([...colKey, task.subtaskId])
+                      }} >
+                        {`${task.taskName}`}
+                        {
+                          task.error &&
+                          <Tooltip
+                            title={"错误码说明"}
+                          >
+                            {task.error}
+                          </Tooltip>
+                        }
+                      </Radio>}>
+                      {task.commandTasks?.length > 0 && (
+                        <Timeline
+                          style={{ marginTop: '18px' }}
+                          className={lineItemStyle}
+                          items={task.commandTasks.map((item: any, index: number) => {
+                            return {
+                              children: (
+                                <>
+                                  <span style={{ marginRight: '12px' }}>{index + 1}</span>
+                                  {dotType[item.type]}
+                                </>
+                              ),
+                              color: execStatus(item.execStatus),
+                              dot: item.execStatus === '执行中' ? <LoadingOutlined /> : undefined
+                            };
+                          })}
+                        />
+                      )}
+                    </Panel>)
+                  }
+                </Collapse>
+              }
+            </>
+          ),
+          color: execStatus(item.execStatus),
+          dot: item.execStatus === '执行中' ? <LoadingOutlined /> : undefined
+        }
+      }));
+    }
+  }, [dataArr, subTaskId]);
+
   useEffect(() => {
     const orderId = searchParams.get('id');
     workOrderExcute({ orderId }).then(res => {
@@ -186,7 +307,8 @@ export default function ExecuteWork() {
       }
       setDataArr(data.landInfos);
 
-      (window as any).mapRef(data?.landInfos?.map(item => {
+
+      (window as any).mapRef(data?.landInfos?.map((item: any) => {
         return {
           ...item,
           execStatus: item.subTasks[0]?.execStatus
@@ -203,23 +325,29 @@ export default function ExecuteWork() {
 
     if (complete) {
       // 建立Websocket连接
-      execWS?.connect && execWS?.connect();
-      console.log(11111);
+      if (execWS?.connect) {
+        execWS?.connect()
+      }
+      // execWS?.connect && execWS?.connect();
       // 执行地图数据初始化
       mapRef.current?.execute?.(dataArr);
     }
 
     return () => {
       // 断开Websocket连接
-      execWS?.disconnect && execWS?.disconnect();
+      if (execWS?.disconnect) {
+        execWS?.disconnect()
+      }
+      // execWS?.disconnect && execWS?.disconnect();
       console.log('Websocket断开连接~');
     };
   }, [complete]);
 
   const onStart = async () => {
     if (subTaskId) {
+      speak(text)
       Modal.confirm({
-        title: '确定要启动当前任务吗？',
+        title: text,
         onOk() {
           command(21);
         }
@@ -230,12 +358,28 @@ export default function ExecuteWork() {
 
   }
 
+  /**
+   * 结束机器人任务
+   */
+  const stop = async (c: string) => {
+    const orderId = searchParams.get('id');
+    const { code, msg } = await commandApi({ commandCode: 124, robotCode: c, workOrderId: Number(orderId), subTaskId: subTaskId });
+    if (code !== 0) {
+      message.error(msg || '工作结束失败');
+      return;
+    }
+    // 刷新列表
+    call();
+    message.success('已结束工作');
+  };
+
   return (
     <Card
       bordered={false}
       title='执行工单'
       extra={
         <Space>
+          <Display count={info.rtkCount} status={info.rtkStatus} voltage={info.voltage} />
           <Button
             type={'primary'}
             style={{ backgroundColor: '#13c2c2' }}
@@ -261,60 +405,87 @@ export default function ExecuteWork() {
             <div
               style={{ height: '72vh', overflowY: 'auto' }}
             >
-              {
-                dataArr?.map((item, index) => <div style={{ width: '90%'}} key={index}>
-                  <div>
-                    {item.landName}
-                    ({` 机器人${item.robotCode}`})
-                  </div>
-                  <Collapse size="small" defaultActiveKey={colKey} onChange={(key) => setColKey([...colKey, ...key])}>
-                    {
-                      item.subTasks.map((task, index) =>  <Panel
-                        key={`${item.name}-${index}`}
-                        header={<Radio checked={select === `${task.taskName}-${index}`} onChange={() => {
-                          speak(`执行任务${task.taskName}，机器人${item?.robotCode}${taskType[task.taskType]}至${item.landName}`.replace(/(\d+)-(\d+)-(\d+)/g, '$1杠$2杠$3'))
-                          setSubTaskId(task.subtaskId)
-                          setSelect(`${task.taskName}-${index}`)
-                          setColKey([...colKey, `${item.name}-${index}`])
-                        }} >
-                          {`${task.taskName}`}
-                          {
-                            task.error &&
-                            <Tooltip
-                              title={"错误码说明"}
-                            >
-                              {task.error}
-                            </Tooltip>
-                          }
-                      </Radio>}>
-                        <div style={{ marginLeft: 10 }}>
-                          {task.commandTasks.map((item: any, index: number) =>  {
-                            let status
-                            if (item.execStatus === '已完成') {
-                              status = 'success'
-                            } else if (item.execStatus === '中断') {
-                              status = 'error'
-                            } else  {
-                              status = 'default'
-                            }
+              {/*{*/}
+              {/*  dataArr?.map((item, index) => <div style={{ width: '90%'}} key={index}>*/}
+              {/*    <div>*/}
+              {/*      {item.landName}*/}
+              {/*      ({` 机器人${item.robotCode}`})*/}
+              {/*    </div>*/}
+              {/*    <Collapse size="small" defaultActiveKey={colKey} onChange={(key) => setColKey([...colKey, ...key])}>*/}
+              {/*      {*/}
+              {/*        item.subTasks.map((task: any, index: number) =>  <Panel*/}
+              {/*          key={`${item.name}-${index}`}*/}
+              {/*          header={<Radio checked={select === `${task.taskName}-${index}`} onChange={() => {*/}
+              {/*            setText(`执行任务${task.taskName}，机器人${item?.robotCode}${taskType[task.taskType]}至${item.landName}`.replace(/(\d+)-(\d+)-(\d+)/g, '$1杠$2杠$3'))*/}
+              {/*            setSubTaskId(task.subtaskId)*/}
+              {/*            setSelect(`${task.taskName}-${index}`)*/}
+              {/*            setColKey([...colKey, `${item.name}-${index}`])*/}
+              {/*          }} >*/}
+              {/*            {`${task.taskName}`}*/}
+              {/*            {*/}
+              {/*              task.error &&*/}
+              {/*              <Tooltip*/}
+              {/*                title={"错误码说明"}*/}
+              {/*              >*/}
+              {/*                {task.error}*/}
+              {/*              </Tooltip>*/}
+              {/*            }*/}
+              {/*        </Radio>}>*/}
+              {/*          <div style={{ marginLeft: 10 }}>*/}
+              {/*            {task.commandTasks.map((item: any, index: number) =>  {*/}
+              {/*              let status*/}
+              {/*              if (item.execStatus === '已完成') {*/}
+              {/*                status = 'success'*/}
+              {/*              } else if (item.execStatus === '中断') {*/}
+              {/*                status = 'error'*/}
+              {/*              } else  {*/}
+              {/*                status = 'default'*/}
+              {/*              }*/}
 
-                            return <>
-                              <Badge key={item.serial} status={status} text={item.execStatus} />
-                              {
-                                index !== task.commandTasks.length - 1 && '->'
-                              }
-                            </>
-                          })}
-                        </div>
-                      </Panel>)
-                    }
-                  </Collapse>
-                </div>)
-              }
+              {/*              return <>*/}
+              {/*                <Badge key={item.serial} status={status as any} text={item.execStatus} />*/}
+              {/*                {*/}
+              {/*                  index !== task.commandTasks.length - 1 && '->'*/}
+              {/*                }*/}
+              {/*              </>*/}
+              {/*            })}*/}
+              {/*          </div>*/}
+              {/*        </Panel>)*/}
+              {/*      }*/}
+              {/*    </Collapse>*/}
+              {/*  </div>)*/}
+              {/*}*/}
+
+              <Timeline
+                style={{ padding: '24px 0', width: '380px', height: '72vh', overflowY: 'auto' }}
+                items={timeLine}
+              />
             </div>
           </Col>
           <Col flex='auto'>
-            <Map styles={{ height: 'calc(100vh - 190px)' }} complete={setComplete} ref={mapRef} />
+            <div>
+              <Space className={styles.operation}>
+                <OperationButton label='校准缓降器' icon={p3} onClick={() => command(27)} />
+                <OperationButton label='收绳' icon={p1} onClick={() => command(28)} />
+                <OperationButton label='放绳' icon={p2} onClick={() => command(29)} />
+                <OperationButton label='弹出锁闩' icon={p5} onClick={() => command(42)} />
+                <OperationButton label='缩回锁闩' icon={p4} onClick={() => command(41)} />
+                <OperationButton label='投球算法校准' icon={p6} onClick={() => command(43)} />
+                <OperationButton label='投球算法验证' icon={p7} onClick={() => command(44)} />
+                {/*<OperationButton label='连续执行' icon={p8} onClick={continues} />*/}
+              </Space>
+              <div className={styles.sign}>
+                <Block type='none' color='#62c400' title='已清扫' />
+                <Block type='none' color='#f3ac00' title='清扫中' />
+                <Block type='none' color='#bfbfbf' title='未清扫' />
+                <Block type='2px #62c400 dashed' color='' title='已喷洒' />
+                <Block type='2px #f3ac00 dashed' color='' title='喷洒中' />
+                <Block type='2px #bfbfbf dashed' color='' title='未喷洒' />
+                <Block type='none' color='#1677ff' title='已完成' />
+                <Block type='none' color='#bfbfbf' title='未完成' />
+              </div>
+              <Map styles={{ height: 'calc(100vh - 190px)' }} complete={setComplete} ref={mapRef} />
+            </div>
           </Col>
         </Row>
     </Card>

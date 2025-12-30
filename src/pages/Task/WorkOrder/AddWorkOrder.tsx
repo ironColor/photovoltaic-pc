@@ -12,7 +12,8 @@ import {
   getPointOptions,
   getTime,
   saveInfo,
-  tree, updateInfo
+  tree,
+  updateInfo
 } from '@/pages/Task/WorkOrder/service';
 
 function isArray(value: any) {
@@ -35,7 +36,6 @@ export default function AddWorkOrder( ) {
   const [groupOptions, setGroupOptions] = useState<any[]>([]);
   const [robotOptions, setRobotOptions] = useState<any[]>([]);
   const [robotsId, setRobotsId] = useState<any[]>([]);
-  const [updateLandsId, setUpdateLandsId] = useState<any[]>([]);
   const [k, setK] = useState();
 
   const handleColumns = useCallback((simple: boolean) => {
@@ -180,7 +180,7 @@ export default function AddWorkOrder( ) {
         search: false
       }
     ];
-  }, [])
+  }, [landData])
 
   const isSlopeTooLarge = (record: any) => {
     return Math.abs(record.k) > Number(k);
@@ -240,9 +240,9 @@ export default function AddWorkOrder( ) {
 
   const onFinish = async (value: any) => {
     const orderId = searchParams.get('orderId');
-
+    console.log(11111, value);
     if(orderId) {
-      updateInfo({...value, robotIds: robotsId, landIds: updateLandsId, orderId }).then(res => {
+      updateInfo({...value, landIds: value.landIds.map((item: any) => item.landId), orderId }).then(res => {
         const { code, msg } = res;
         if (code !== 0) {
           message.error(msg || '创建失败');
@@ -250,6 +250,7 @@ export default function AddWorkOrder( ) {
         } else {
           message.success('提交成功');
           form.resetFields();
+          history.go(-1)
         }
       })
     } else {
@@ -505,10 +506,12 @@ export default function AddWorkOrder( ) {
               />
             </Form.Item>
             <Form.Item label="清洗时间" name="estimatedWorkTime" rules={[{ required: true, message: '请获取清洗时间' }]}>
-              <Space>
-                <Input disabled={true} />
-                <Button type="primary" onClick={getTimeClick}>获取</Button>
-              </Space>
+              <Input
+                disabled
+                suffix={
+                  <Button type="primary" onClick={getTimeClick}>获取</Button>
+                }
+              />
             </Form.Item>
             <Form.Item label="起飞点" rules={[{ required: true, message: '请选起飞点' }]} name="takeoffPointId">
               <Select

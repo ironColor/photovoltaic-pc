@@ -77,7 +77,10 @@ const WorkOrder: React.FC = () => {
       title: '预计作业时间',
       dataIndex: 'estimatedWorkTime',
       ellipsis: true,
-      search: false
+      search: false,
+      render: (_: any, record: any) => {
+        return formatTime(record.estimatedWorkTime)
+  }
     },
     {
       title: '起飞点',
