@@ -37,6 +37,8 @@ export default function AddWorkOrder( ) {
   const [robotOptions, setRobotOptions] = useState<any[]>([]);
   const [robotsId, setRobotsId] = useState<any[]>([]);
   const [k, setK] = useState();
+  const useWatch = Form.useWatch;
+  const orderType = useWatch('orderType', form);
 
   const handleColumns = useCallback((simple: boolean) => {
     if (simple) {
@@ -411,6 +413,20 @@ export default function AddWorkOrder( ) {
       }
     }, [landId]);
 
+
+  const isSpray = orderType === 3;
+
+// 当是喷洒时，清空并移除相关字段值（可选，避免残留）
+  useEffect(() => {
+    if (isSpray) {
+      form.setFieldsValue({
+        robotIds: undefined,
+        mountPointId: undefined,
+        uploadPointId: undefined,
+      });
+    }
+  }, [isSpray, form]);
+
   return (
     <Row gutter={32} style={{ background: '#fff'}}>
       <Col flex='650px'>
@@ -447,6 +463,10 @@ export default function AddWorkOrder( ) {
                   {
                     label: '水洗',
                     value: 2
+                  },
+                  {
+                    label: '喷洒',
+                    value: 3
                   }
                 ]}
                 showSearch={false} // 如果不需要搜索可关闭
@@ -497,14 +517,16 @@ export default function AddWorkOrder( ) {
                 onChange={handleGroupChange}
               />
             </Form.Item>
-            <Form.Item label="机器人"  rules={[{ required: true, message: '请选择机器人' }]} name="robotIds">
-              <Select
-                mode="multiple"
-                options={robotOptions}
-                showSearch={false} // 如果不需要搜索可关闭
-                placeholder="请选择机器人"
-              />
-            </Form.Item>
+            {
+              !isSpray &&  <Form.Item label="机器人"  rules={[{ required: true, message: '请选择机器人' }]} name="robotIds">
+                <Select
+                  mode="multiple"
+                  options={robotOptions}
+                  showSearch={false} // 如果不需要搜索可关闭
+                  placeholder="请选择机器人"
+                />
+              </Form.Item>
+            }
             <Form.Item label="清洗时间" name="estimatedWorkTime" rules={[{ required: true, message: '请获取清洗时间' }]}>
               <Input
                 disabled
@@ -520,20 +542,25 @@ export default function AddWorkOrder( ) {
                 placeholder="请选择起飞点"
               />
             </Form.Item>
-            <Form.Item label="挂载点" rules={[{ required: true, message: '请选挂载点' }]} name="mountPointId">
-              <Select
-                options={pull}
-                showSearch={false} // 如果不需要搜索可关闭
-                placeholder="请选择挂载点"
-              />
-            </Form.Item>
-            <Form.Item label="卸载点" rules={[{ required: true, message: '请选卸载点' }]} name="uploadPointId">
-              <Select
-                options={unPull}
-                showSearch={false} // 如果不需要搜索可关闭
-                placeholder="请选择卸载点"
-              />
-            </Form.Item>
+            {
+              !isSpray &&    <Form.Item label="挂载点" rules={[{ required: true, message: '请选挂载点' }]} name="mountPointId">
+                <Select
+                  options={pull}
+                  showSearch={false} // 如果不需要搜索可关闭
+                  placeholder="请选择挂载点"
+                />
+              </Form.Item>
+            }
+
+            {
+              !isSpray && <Form.Item label="卸载点" rules={[{ required: true, message: '请选卸载点' }]} name="uploadPointId">
+                <Select
+                  options={unPull}
+                  showSearch={false} // 如果不需要搜索可关闭
+                  placeholder="请选择卸载点"
+                />
+              </Form.Item>
+            }
             <Form.Item label={null}>
               <Button type="primary" htmlType="submit"  style={{ marginLeft: 8 }}>
                 确定
@@ -601,7 +628,7 @@ export default function AddWorkOrder( ) {
                   <Space size={16}>
                     <a onClick={() => {
                       setOpen(false)
-                      addLand(selectedRows.reverse())
+                      addLand(selectedRows)
                     }}>
                       添加
                     </a>

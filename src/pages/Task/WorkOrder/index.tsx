@@ -52,8 +52,16 @@ const WorkOrder: React.FC = () => {
       width: 100,
       ellipsis: true,
       search: false,
-      render: (text, record: any) => {
-        return record.orderType === 1 ? '干洗' : '水洗'
+      valueEnum: {
+        1: {
+          text: '干洗'
+        },
+        2: {
+          text: '水洗'
+        },
+        3: {
+          text: '喷洒'
+        }
       }
     },
     {
