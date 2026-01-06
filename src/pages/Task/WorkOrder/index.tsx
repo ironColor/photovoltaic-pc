@@ -58,9 +58,6 @@ const WorkOrder: React.FC = () => {
         },
         2: {
           text: '水洗'
-        },
-        3: {
-          text: '喷洒'
         }
       }
     },

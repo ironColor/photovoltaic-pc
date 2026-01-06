@@ -96,7 +96,6 @@ const Map: React.ForwardRefRenderFunction<
       (item: { execStatus: string }) => item.execStatus === '执行中'
     );
     lines.length > 0 && execLines(lines);
-
     // 飞机的实时位置
     if (air && air?.length > 0) {
       const marker = new AMap.current.Marker({
@@ -110,10 +109,11 @@ const Map: React.ForwardRefRenderFunction<
 
   const execLines = (lines: any[] = []) => {
     lines.map(line => {
-      const points = line.commandTaskLogs;
+      const points = line.commandTaskLogs || line.subTasks.filter(item => item.execStatus === '执行中')[0].commandTasks;
       if (!points) {
         return;
       }
+      console.log('points', points);
       // 判断第一个坐标和最后一个坐标是否相同，如果相同最后一个坐标圆点将不渲染
       const isLoop =
         points[0]?.coordinate?.lon === points[points?.length - 1]?.coordinate?.lon &&

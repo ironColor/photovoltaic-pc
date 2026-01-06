@@ -6,6 +6,7 @@ import Map from '@/pages/components/Map';
 import { Col, Modal, Row, Table, Tag } from 'antd';
 import { dotType, taskType } from '@/pages/components/Common';
 import { useSearchParams } from '@@/exports';
+import { formatTime } from '@/utils/utils';
 
 const SubLog: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -47,7 +48,7 @@ const SubLog: React.FC = () => {
     {
       title: '等待时间',
       dataIndex: 'waitingTime',
-      render: (_, row) => <Tag color='blue'>{row.waitingTime} 秒</Tag>
+      render: (_, row) => <Tag color='blue'>{formatTime(row.waitingTime)}</Tag>
     },
     {
       title: '状态',

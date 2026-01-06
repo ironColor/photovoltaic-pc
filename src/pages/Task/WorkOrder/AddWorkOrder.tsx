@@ -20,6 +20,15 @@ function isArray(value: any) {
   return Array.isArray(value);
 }
 
+
+function formatTime(seconds: number) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 export default function AddWorkOrder( ) {
   const mapRef = useRef<any>();
   const [complete, setComplete] = useState(false);
@@ -35,7 +44,7 @@ export default function AddWorkOrder( ) {
   const [unPull, setUnPull] = useState<any[]>([]);
   const [groupOptions, setGroupOptions] = useState<any[]>([]);
   const [robotOptions, setRobotOptions] = useState<any[]>([]);
-  const [robotsId, setRobotsId] = useState<any[]>([]);
+  const [, setRobotsId] = useState<any[]>([]);
   const [k, setK] = useState();
   const useWatch = Form.useWatch;
   const orderType = useWatch('orderType', form);
@@ -224,7 +233,7 @@ export default function AddWorkOrder( ) {
   }, []);
 
   const getTimeClick = () => {
-    getTime({ landIds: landData.map(item => item.landId), robotIds: form.getFieldValue('robotIds'), }).then(res => {
+    getTime({ landIds: landData.map(item => item.landId), robotIds: form.getFieldValue('robotIds'), orderType }).then(res => {
       const { code, msg, data } = res;
       if (code !== 0) {
         message.error(msg || '获取失败');
@@ -242,7 +251,7 @@ export default function AddWorkOrder( ) {
 
   const onFinish = async (value: any) => {
     const orderId = searchParams.get('orderId');
-    console.log(11111, value);
+
     if(orderId) {
       updateInfo({...value, landIds: value.landIds.map((item: any) => item.landId), orderId }).then(res => {
         const { code, msg } = res;
@@ -414,7 +423,7 @@ export default function AddWorkOrder( ) {
     }, [landId]);
 
 
-  const isSpray = orderType === 3;
+  const isSpray = orderType === 2;
 
 // 当是喷洒时，清空并移除相关字段值（可选，避免残留）
   useEffect(() => {
@@ -450,9 +459,6 @@ export default function AddWorkOrder( ) {
                 onChange={handleLandNameChange}
               />
             </Form.Item>
-            <Form.Item label='工单名称' rules={[{ required: true, message: '请输入机组名称' }]} name="orderName">
-              <Input />
-            </Form.Item>
             <Form.Item label='工单类型' rules={[{ required: true, message: '请选择工单类型' }]} name="orderType">
               <Select
                 options={[
@@ -463,16 +469,16 @@ export default function AddWorkOrder( ) {
                   {
                     label: '水洗',
                     value: 2
-                  },
-                  {
-                    label: '喷洒',
-                    value: 3
                   }
                 ]}
                 showSearch={false} // 如果不需要搜索可关闭
                 placeholder="请选择工单类型"
               />
             </Form.Item>
+            <Form.Item label='工单名称' rules={[{ required: true, message: '请输入机组名称' }]} name="orderName">
+              <Input />
+            </Form.Item>
+
             <Form.Item
               label="地块"
               name="landIds"
@@ -527,7 +533,14 @@ export default function AddWorkOrder( ) {
                 />
               </Form.Item>
             }
-            <Form.Item label="清洗时间" name="estimatedWorkTime" rules={[{ required: true, message: '请获取清洗时间' }]}>
+            <Form.Item
+              label="清洗时间"
+              name="estimatedWorkTime"
+              rules={[{ required: true, message: '请获取清洗时间' }]}
+              getValueProps={(value) => ({
+                value: value ? formatTime(value) : ''
+              })}
+            >
               <Input
                 disabled
                 suffix={

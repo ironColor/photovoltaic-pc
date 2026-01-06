@@ -1,17 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import type { ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
-import { page, cruise } from './service';
+import { page } from './service';
 import Map from '@/pages/components/Map';
-import { Badge, Col, Modal, Row, Statistic, Table, type TableProps, Tag } from 'antd';
+import { Col, Modal, Row, Table, Tag } from 'antd';
 import { taskType } from '@/pages/components/Common';
 import { history } from '@@/core/history';
 
 const Log: React.FC = () => {
   const [open, setOpen] = useState(false);
-  const [id, setId] = useState(0);
   const [data, setData] = useState<any>({});
-  const [names, setNames] = useState<any>([]);
   const mapRef = useRef<any>();
   const [complete, setComplete] = useState(false);
 
@@ -80,14 +78,6 @@ const Log: React.FC = () => {
               pathname: `/task/orderLog/subLog`,
               search: `?id=${encodeURIComponent(row?.id)}`
             });
-            // setOpen(true);
-            // setId(row.id);
-            // setNames({
-            //   areaName: row.areaName,
-            //   parentTaskName: row.parentTaskName,
-            //   execStartTime: row.execStartTime,
-            //   execStatus: row.execStatus
-            // });
           }}
         >
           查看
@@ -160,11 +150,6 @@ const Log: React.FC = () => {
       >
         <Row gutter={16}>
           <Col flex='550px'>
-            {/*<Statistic*/}
-            {/*  title={names.areaName || '获取失败'}*/}
-            {/*  value={names.parentTaskName || '获取失败'}*/}
-            {/*  style={{ margin: '0' }}*/}
-            {/*/>*/}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span>地块名称：{data.landName}</span>
               <span>任务名称：{data.taskName}</span>

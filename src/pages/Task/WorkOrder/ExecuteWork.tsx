@@ -8,11 +8,11 @@ import {
   Modal,
   Radio,
   Row,
-  Space,
+  Space, Statistic,
   Timeline,
   Tooltip
 } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from '@@/exports';
 import Map from '@/pages/components/Map';
 import { Panel } from 'rc-collapse';
@@ -22,7 +22,7 @@ import { config } from '../../../../public/scripts/config';
 import { getCurrentUser } from '@/utils/authority';
 import { execute } from '@/pages/Task/Monitor/service';
 import { ExclamationCircleFilled, LoadingOutlined } from '@ant-design/icons';
-import { dotType, taskType } from '@/pages/components/Common';
+import { dotType, level, taskType } from '@/pages/components/Common';
 import styles from '@/pages/Task/Monitor/Execute.less';
 import OperationButton from '@/pages/Task/Monitor/components/Operation/Operation';
 import p1 from '/public/picture/01.png';
@@ -49,6 +49,8 @@ export default function ExecuteWork() {
   const [text, setText] = useState<string>();
   // 设备信息
   const [info, setInfo] = useState<any>({});
+  // 任务类型
+  const [task, setTask] = useState<number>();
   const [timeLine, setTimeline] = useState<any>();
   const lineItemStyle = useEmotionCss(() => ({
     '.ant-timeline-item-last': {
@@ -56,29 +58,51 @@ export default function ExecuteWork() {
       'margin-bottom': '-24px'
     }
   }));
+  // 机器人电压
+  const [robotVoltages, setRobotVoltages] = useState<{ [key: string]: number[] }>({});
 
   const call = useCallback(() => {
-    workOrderImmediate({ id: orderLogId }).then(res => {
-      const { code, msg, data } = res;
-      if (code !== 0) {
-        message.error(msg || '获取失败');
-        return;
-      }
-      const formatData = data?.landInfos?.map((item: any) => {
-        return {
-          ...item,
-          execStatus: item.subTasks[0]?.execStatus
+    const orderId = searchParams.get('id');
+
+    if (orderLogId) {
+      workOrderImmediate({ id: orderLogId }).then(res => {
+        const { code, msg, data } = res;
+        if (code !== 0) {
+          message.error(msg || '获取失败');
+          return;
         }
+        const formatData = data?.landInfos?.map((item: any) => {
+          return {
+            ...item,
+            execStatus: item.subTasks[0]?.execStatus
+          }
+        })
+        setDataArr(formatData)
       })
-      setDataArr(formatData)
-    })
+    } else {
+      workOrderExcute({ orderId }).then(res => {
+        const { code, msg, data } = res;
+        if (code !== 0) {
+          message.error(msg || '获取失败');
+          return;
+        }
+        const formatData = data?.landInfos?.map((item: any) => {
+          return {
+            ...item,
+            execStatus: item.subTasks[0]?.execStatus
+          }
+        })
+        setDataArr(formatData)
+      })
+    }
   }, [orderLogId])
 
 
+  const username = getCurrentUser()?.username;
   /**
    * 任务websocket
    */
-  const execWS = useWebSocket(`${config.ws}/pc/${getCurrentUser().username}`, {
+  const execWS = useWebSocket(username ? `${config.ws}/pc/${username}` : null, {
     onOpen: event => {
       console.log('通讯WebSocket连接成功：', event);
     },
@@ -140,6 +164,10 @@ export default function ExecuteWork() {
       } else if (data.commandCode === 120) {
         message.error('释放吸盘失败');
       } else if (data.commandCode === 123) {
+        setRobotVoltages(prev => ({
+          ...prev,
+          [data.robotCode]: [data.voltage1, data.voltage2] // 更新或新增机器人电压
+        }));
         call();
       } else if (data.commandCode === 127) {
         message.error('机器人工作结束失败');
@@ -155,7 +183,6 @@ export default function ExecuteWork() {
       console.warn('通讯WebSocket连接错误：', event);
     }
   });
-
 
   const command = useCallback(async (c: number) => {
     const orderId = searchParams.get('id');
@@ -212,20 +239,12 @@ export default function ExecuteWork() {
     return statusColors[status] || 'red';
   }, []);
 
-
-  useEffect(() => {
-    if (!dataArr?.length) return;
-
-    const nextColKeySet = new Set(colKey);
-
-    const timelineItems = dataArr.map((item: any) => {
+  const timelineItems = useMemo(() => {
+    if (!dataArr?.length) return [];
+    console.log(111111, dataArr);
+    return dataArr.map((item: any) => {
       const firstSubTask = item.subTasks?.[0];
       const execStatus = firstSubTask?.execStatus;
-
-      // 自动展开“执行中”的子任务
-      if (execStatus === '执行中' && firstSubTask?.subtaskId) {
-        nextColKeySet.add(firstSubTask.subtaskId);
-      }
 
       return {
         color: execStatusFc(execStatus),
@@ -233,24 +252,20 @@ export default function ExecuteWork() {
         children: (
           <>
             <b>
-              <Tooltip
-                placement="top"
-                title={execStatus === '可执行' ? '可执行当前任务' : ''}
-              >
+              <Tooltip placement="top" title={execStatus === '可执行' ? '可执行当前任务' : ''}>
                 {execStatus === '可执行' && (
                   <Badge status="processing" style={{ marginRight: 8 }} />
                 )}
               </Tooltip>
-              {item.taskName}
+              {item.landName}
             </b>
 
             {item.robotCode && (
               <div className={styles.code}>
-                {item.landName}（机器人{item.robotCode}）
-                <div
-                  className={styles.closeIcon}
-                  onClick={() => stop(item.robotCode)}
-                >
+                机器人({item.robotCode}）
+                {robotVoltages[item.robotCode] &&
+                  ` 🔋${level[robotVoltages[item.robotCode][0]]}🔋${level[robotVoltages[item.robotCode][1]]}`}
+                <div className={styles.closeIcon} onClick={() => stop(item.robotCode)}>
                   ×
                 </div>
               </div>
@@ -259,10 +274,8 @@ export default function ExecuteWork() {
             {!!item.subTasks?.length && (
               <Collapse
                 size="small"
-                activeKey={Array.from(nextColKeySet)}
-                onChange={(keys) => {
-                  setColKey(keys as string[]);
-                }}
+                activeKey={colKey} // 直接使用状态
+                onChange={(keys) => setColKey(keys as string[])}
               >
                 {item.subTasks.map((task: any, index: number) => (
                   <Panel
@@ -271,12 +284,10 @@ export default function ExecuteWork() {
                       <Radio
                         checked={subTaskId === task.subtaskId}
                         onChange={() => {
-                          setText(
-                            `执行任务${task.taskName}，机器人${item.robotCode}${taskType[task.taskType]}至${item.landName}`
-                          );
+                          setText(`执行任务${task.taskName}，机器人${item.robotCode}${taskType[task.taskType]}至${item.landName}`);
                           setSubTaskId(task.subtaskId);
                           setSelect(`${task.taskName}-${index}`);
-                          setColKey((prev) => [...new Set([...prev, task.subtaskId])]);
+                          setTask(task.taskType)
                         }}
                       >
                         {task.taskName}
@@ -292,38 +303,70 @@ export default function ExecuteWork() {
                       <Timeline
                         style={{ marginTop: 18 }}
                         className={lineItemStyle}
-                        items={task.commandTasks.map(
-                          (cmd: any, idx: number) => ({
-                            children: (
-                              <>
-                              <span style={{ marginRight: 12 }}>
-                                {idx + 1}
-                              </span>
-                                {dotType[cmd.type]}
-                              </>
-                            ),
-                            color: execStatusFc(cmd.execStatus),
-                            dot:
-                              cmd.execStatus === '执行中' ? (
-                                <LoadingOutlined />
-                              ) : undefined
-                          })
-                        )}
+                        items={task.commandTasks.map((cmd: any, idx: number) => ({
+                          children: (
+                            <>
+                              <span style={{ marginRight: 12 }}>{idx + 1}</span>
+                              {dotType[cmd.type]}
+                            </>
+                          ),
+                          color: execStatusFc(cmd.execStatus),
+                          dot: cmd.execStatus === '执行中' ? <LoadingOutlined /> : undefined,
+                        }))}
                       />
+                    )}
+                    {task?.countDownTime > Date.now() && (
+                      <div>
+                        等待清扫：
+                        <Statistic.Countdown
+                          style={{ display: 'inline' }}
+                          valueStyle={{ display: 'inline', fontSize: 16 }}
+                          value={task?.countDownTime || 0}
+                          onFinish={() => {
+                            // 倒计时结束状态改为"已完成"
+                            dataArr[
+                              dataArr.findIndex((task: any) => task.execStatus === '执行中')
+                              ].execStatus = '已完成';
+                            (window as any).mapRef(dataArr);
+                          }}
+                        />
+                      </div>
                     )}
                   </Panel>
                 ))}
               </Collapse>
             )}
           </>
-        )
+        ),
       };
     });
+  }, [dataArr, subTaskId, colKey, robotVoltages]); // 这些是真正影响渲染的依赖
 
+// 然后直接使用
+  useEffect(() => {
     setTimeline(timelineItems);
-    setColKey(Array.from(nextColKeySet));
-  }, [dataArr, subTaskId, colKey]);
+  }, [timelineItems]);
 
+  useEffect(() => {
+    if (!dataArr?.length) return;
+
+    const autoExpandKeys = new Set<string>(colKey); // 保留用户已展开的
+
+    for (const item of dataArr) {
+      const firstSubTask = item.subTasks?.[0];
+      if (firstSubTask?.execStatus === '执行中' && firstSubTask.subtaskId) {
+        autoExpandKeys.add(firstSubTask.subtaskId);
+      }
+    }
+
+    const nextKeys = Array.from(autoExpandKeys).sort();
+    const currentKeys = [...colKey].sort();
+
+    // 深度比较，避免无意义更新
+    if (JSON.stringify(currentKeys) !== JSON.stringify(nextKeys)) {
+      setColKey(nextKeys);
+    }
+  }, [dataArr]);
 
   useEffect(() => {
     const orderId = searchParams.get('id');
@@ -333,8 +376,13 @@ export default function ExecuteWork() {
         message.error(msg || '获取失败');
         return;
       }
-      setDataArr(data.landInfos);
 
+      const formatData = data.landInfos.map((item: any) => ({
+        ...item,
+        execStatus: item.subTasks?.[0].execStatus
+      }));
+
+      setDataArr(formatData);
 
       (window as any).mapRef(data?.landInfos?.map((item: any) => {
         return {
@@ -373,13 +421,18 @@ export default function ExecuteWork() {
 
   const onStart = async () => {
     if (subTaskId) {
-      speak(text)
-      Modal.confirm({
-        title: text,
-        onOk() {
-          command(21);
-        }
-      });
+      if (task === 2 || task === 4) {
+        speak(text)
+        Modal.confirm({
+          title: text,
+          onOk() {
+            command(21);
+          }
+        });
+      } else {
+        command(21);
+      }
+
     } else {
       message.error('请选择子任务')
     }
@@ -433,57 +486,6 @@ export default function ExecuteWork() {
             <div
               style={{ height: '72vh', overflowY: 'auto' }}
             >
-              {/*{*/}
-              {/*  dataArr?.map((item, index) => <div style={{ width: '90%'}} key={index}>*/}
-              {/*    <div>*/}
-              {/*      {item.landName}*/}
-              {/*      ({` 机器人${item.robotCode}`})*/}
-              {/*    </div>*/}
-              {/*    <Collapse size="small" defaultActiveKey={colKey} onChange={(key) => setColKey([...colKey, ...key])}>*/}
-              {/*      {*/}
-              {/*        item.subTasks.map((task: any, index: number) =>  <Panel*/}
-              {/*          key={`${item.name}-${index}`}*/}
-              {/*          header={<Radio checked={select === `${task.taskName}-${index}`} onChange={() => {*/}
-              {/*            setText(`执行任务${task.taskName}，机器人${item?.robotCode}${taskType[task.taskType]}至${item.landName}`.replace(/(\d+)-(\d+)-(\d+)/g, '$1杠$2杠$3'))*/}
-              {/*            setSubTaskId(task.subtaskId)*/}
-              {/*            setSelect(`${task.taskName}-${index}`)*/}
-              {/*            setColKey([...colKey, `${item.name}-${index}`])*/}
-              {/*          }} >*/}
-              {/*            {`${task.taskName}`}*/}
-              {/*            {*/}
-              {/*              task.error &&*/}
-              {/*              <Tooltip*/}
-              {/*                title={"错误码说明"}*/}
-              {/*              >*/}
-              {/*                {task.error}*/}
-              {/*              </Tooltip>*/}
-              {/*            }*/}
-              {/*        </Radio>}>*/}
-              {/*          <div style={{ marginLeft: 10 }}>*/}
-              {/*            {task.commandTasks.map((item: any, index: number) =>  {*/}
-              {/*              let status*/}
-              {/*              if (item.execStatus === '已完成') {*/}
-              {/*                status = 'success'*/}
-              {/*              } else if (item.execStatus === '中断') {*/}
-              {/*                status = 'error'*/}
-              {/*              } else  {*/}
-              {/*                status = 'default'*/}
-              {/*              }*/}
-
-              {/*              return <>*/}
-              {/*                <Badge key={item.serial} status={status as any} text={item.execStatus} />*/}
-              {/*                {*/}
-              {/*                  index !== task.commandTasks.length - 1 && '->'*/}
-              {/*                }*/}
-              {/*              </>*/}
-              {/*            })}*/}
-              {/*          </div>*/}
-              {/*        </Panel>)*/}
-              {/*      }*/}
-              {/*    </Collapse>*/}
-              {/*  </div>)*/}
-              {/*}*/}
-
               <Timeline
                 style={{ padding: '24px 0', width: '380px', height: '72vh', overflowY: 'auto' }}
                 items={timeLine}

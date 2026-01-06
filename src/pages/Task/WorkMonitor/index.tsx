@@ -1,9 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Button, Col, Row, Space, Table } from 'antd';
+import { Badge, Col, Row, Space, Table } from 'antd';
 import { ProColumns, ProTable } from '@ant-design/pro-components';
 import { history } from '@@/core/history';
 import { page } from './service';
-import { PlusOutlined } from '@ant-design/icons';
 import TreeCard from '@/pages/components/Tree';
 
 const WorkOrder: React.FC = () => {
@@ -23,7 +22,7 @@ const WorkOrder: React.FC = () => {
       width: 100,
       ellipsis: true,
       search: false,
-      render: (text, record) => {
+      render: (text, record: any) => {
         return record.orderType === 1 ? '干洗' : '水洗'
       }
     },
@@ -48,7 +47,8 @@ const WorkOrder: React.FC = () => {
       title: '执行状态',
       dataIndex: 'execStatus',
       ellipsis: true,
-      search: false
+      search: false,
+      render: text => <Badge status={text === '执行中' ? 'success' : 'default'} text={text} />
     },
     {
       title: '起飞点',
