@@ -48,7 +48,7 @@ const WorkOrder: React.FC = () => {
       dataIndex: 'execStatus',
       ellipsis: true,
       search: false,
-      render: text => <Badge status={text === '执行中' ? 'success' : 'default'} text={text} />
+      render: (text, record: any) => <Badge status={record.execStatus === '执行中' ? 'success' : 'default'} text={text} />
     },
     {
       title: '起飞点',

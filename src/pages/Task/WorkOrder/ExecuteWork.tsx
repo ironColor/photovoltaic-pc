@@ -77,7 +77,13 @@ export default function ExecuteWork() {
             execStatus: item.subTasks[0]?.execStatus
           }
         })
-        setDataArr(formatData)
+        setDataArr(formatData);
+        (window as any).mapRef(data?.landInfos?.map((item: any) => {
+          return {
+            ...item,
+            execStatus: item.subTasks[0]?.execStatus
+          }
+        }));
       })
     } else {
       workOrderExcute({ orderId }).then(res => {
@@ -92,7 +98,13 @@ export default function ExecuteWork() {
             execStatus: item.subTasks[0]?.execStatus
           }
         })
-        setDataArr(formatData)
+        setDataArr(formatData);
+        (window as any).mapRef(data?.landInfos?.map((item: any) => {
+          return {
+            ...item,
+            execStatus: item.subTasks[0]?.execStatus
+          }
+        }));
       })
     }
   }, [orderLogId])

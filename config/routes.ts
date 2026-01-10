@@ -65,70 +65,52 @@ export default [
         path: '/task',
         redirect: '/task/monitor'
       },
-      {
-        name: '实时监控',
-        path: '/task/monitor',
-        routes: [
-          {
-            path: '/task/monitor',
-            redirect: '/task/monitor/list'
-          },
-          {
-            path: '/task/monitor/list',
-            component: './Task/Monitor'
-          },
-          {
-            path: '/task/monitor/execute/:id',
-            component: './Task/Monitor/Execute'
-          }
-        ]
-      },
-      {
-        name: '任务设计',
-        path: '/task/design',
-        routes: [
-          {
-            path: '/task/design',
-            redirect: '/task/design/list'
-          },
-          {
-            path: '/task/design/list',
-            component: './Task/Design'
-          },
-          {
-            path: '/task/design/add',
-            component: './Task/Design/DesignAdd'
-          }
-        ]
-      },
-      {
-        name: '任务日志',
-        path: '/task/log',
-        component: './Task/Log'
-      },
-      {
-        name: '工单日志',
-        path: '/task/orderLog',
-        routes: [
-          {
-            path: '/task/orderLog',
-            redirect: '/task/orderLog/list'
-          },
-          {
-            path: '/task/orderLog/list',
-            component: './Task/OrderLog',
-          },
-          {
-            path: '/task/orderLog/subLog',
-            component: './Task/OrderLog/SubLog',
-          }
-        ]
-      },
-      {
-        name: '子任务',
-        path: '/task/subtask',
-        component: './Task/Subtask'
-      },
+      // {
+      //   name: '实时监控',
+      //   path: '/task/monitor',
+      //   routes: [
+      //     {
+      //       path: '/task/monitor',
+      //       redirect: '/task/monitor/list'
+      //     },
+      //     {
+      //       path: '/task/monitor/list',
+      //       component: './Task/Monitor'
+      //     },
+      //     {
+      //       path: '/task/monitor/execute/:id',
+      //       component: './Task/Monitor/Execute'
+      //     }
+      //   ]
+      // },
+      // {
+      //   name: '任务设计',
+      //   path: '/task/design',
+      //   routes: [
+      //     {
+      //       path: '/task/design',
+      //       redirect: '/task/design/list'
+      //     },
+      //     {
+      //       path: '/task/design/list',
+      //       component: './Task/Design'
+      //     },
+      //     {
+      //       path: '/task/design/add',
+      //       component: './Task/Design/DesignAdd'
+      //     }
+      //   ]
+      // },
+      // {
+      //   name: '任务日志',
+      //   path: '/task/log',
+      //   component: './Task/Log'
+      // },
+      // {
+      //   name: '子任务',
+      //   path: '/task/subtask',
+      //   component: './Task/Subtask'
+      // },
       {
         name: '工单执行',
         path: '/task/workMonitor',
@@ -166,6 +148,24 @@ export default [
           {
             path: '/task/workOrder/subTask',
             component: './Task/WorkOrder/workTaskList'
+          }
+        ]
+      },
+      {
+        name: '工单日志',
+        path: '/task/orderLog',
+        routes: [
+          {
+            path: '/task/orderLog',
+            redirect: '/task/orderLog/list'
+          },
+          {
+            path: '/task/orderLog/list',
+            component: './Task/OrderLog',
+          },
+          {
+            path: '/task/orderLog/subLog',
+            component: './Task/OrderLog/SubLog',
           }
         ]
       },
