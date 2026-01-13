@@ -44,7 +44,12 @@ const WorkOrder: React.FC = () => {
       title: '工单名称',
       dataIndex: 'orderName',
       width: 100,
-      ellipsis: true
+      ellipsis: true,
+      search: {
+        transform: (value) => {
+          return { workOrderName: value };
+        }
+      }
     },
     {
       title: '工单类型',

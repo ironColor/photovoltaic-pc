@@ -1,20 +1,19 @@
 import { ProColumns, ProTable } from '@ant-design/pro-components';
-import { history } from '@@/core/history';
-import { Col, Divider, message, Popconfirm, Row, Space, Table } from 'antd';
+import { Col, message, Popconfirm, Row, Space, Table } from 'antd';
 import React, { useRef, useState } from 'react';
 import { getList, del } from '@/pages/Device/TrackPoint/service';
 import TreeCard from '@/pages/components/Tree';
 
 const Option = {
-  0: "普通点",
-  2: "喷洒",
-  3: "投放",
-  4: "回收",
-  5: "割草",
-  6: "巡检",
+  // 0: "普通点",
+  // 2: "喷洒",
+  // 3: "投放",
+  // 4: "回收",
+  // 5: "割草",
+  // 6: "巡检",
   7: "挂载点",
   8: "卸载点",
-  9: "作业点",
+  // 9: "作业点",
   10: "起飞点",
 }
 
@@ -65,43 +64,6 @@ const TrackPoint = () => {
       dataIndex: 'createTime',
       width: 170,
       search: false
-    },
-    {
-      title: '操作',
-      width: 170,
-      search: false,
-      render: (text: any) => {
-        return (
-          <>
-            <a
-              onClick={() => {
-                history.push({
-                  pathname: `/task/workOrder/add`,
-                  search: `?orderId=${encodeURIComponent(text?.orderId)}`
-                });
-              }}
-            >
-              编辑
-            </a>
-            <Divider type='vertical' />
-            <Popconfirm
-              title='确认删除?'
-              okText='确认'
-              cancelText='取消'
-              onConfirm={async () => {
-                const { code, msg } = await del([text.pointId]);
-                if (code === 0) {
-                  message.success('删除成功');
-                } else {
-                  message.error(msg || '删除失败');
-                }
-              }}
-            >
-              <span style={{ color: '#1677ff' }}>删除</span>
-            </Popconfirm>
-          </>
-        );
-      }
     }
   ];
 

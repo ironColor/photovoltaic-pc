@@ -50,6 +50,7 @@ export default function AddWorkOrder( ) {
   const [k, setK] = useState();
   const useWatch = Form.useWatch;
   const orderType = useWatch('orderType', form);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
   const handleColumns = useCallback((simple: boolean) => {
     if (simple) {
@@ -81,6 +82,10 @@ export default function AddWorkOrder( ) {
                       sort: index
                     }))
                 );
+                // 同步取消选中
+                setSelectedRowKeys(landData
+                    .filter(item => item.landId !== record.landId)
+                    .map(item => item.landId))
               }}
             >
               删除
@@ -206,7 +211,7 @@ export default function AddWorkOrder( ) {
       sort: index + landData.length,
     }));
     setLandData(prev => [...prev, ...uniqueNewItems]);
-
+    // setSelectedRowKeys(uniqueNewItems.map(item => item.landId));
   }
 
   const handleDragSortEnd = (_: number, __: number, newDataSource: any) => {
@@ -223,6 +228,9 @@ export default function AddWorkOrder( ) {
 
   const handleLandNameChange = useCallback((value: any, option: any) => {
     setLandId(option.areaId)
+    // 切换场地
+    // 清空地块
+    setLandData([])
   }, []);
 
   const handleGroupChange = useCallback((value: any, option: any) => {
@@ -330,6 +338,8 @@ export default function AddWorkOrder( ) {
 
         setRobotsId(detailData.robotIds);
         setLandData(detailData.landList);
+        // 同步选中
+        setSelectedRowKeys(detailData.landList.map(item => item.landId))
 
       } catch (err) {
         console.error('数据加载异常:', err);
@@ -477,8 +487,8 @@ export default function AddWorkOrder( ) {
                 placeholder="请选择工单类型"
               />
             </Form.Item>
-            <Form.Item label='工单名称' rules={[{ required: true, message: '请输入机组名称' }]} name="orderName">
-              <Input />
+            <Form.Item label='工单名称' rules={[{ required: true, message: '请输入工单名称' }]} name="orderName">
+              <Input placeholder="请输入工单名称" />
             </Form.Item>
 
             <Form.Item
@@ -621,6 +631,10 @@ export default function AddWorkOrder( ) {
               }}
               dateFormatter='string'
               rowSelection={{
+                selectedRowKeys,
+                onChange: (keys) => {
+                  setSelectedRowKeys(keys); // 同步用户操作
+                },
                 selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT],
                 getCheckboxProps: (record: Land.Item) => ({
                   disabled: isSlopeTooLarge(record),
@@ -631,7 +645,10 @@ export default function AddWorkOrder( ) {
                   <Space size={24}>
                 <span>
                   已选 {selectedRowKeys.length} 项
-                  <a style={{ marginInlineStart: 8 }} onClick={onCleanSelected}>
+                  <a style={{ marginInlineStart: 8 }} onClick={() => {
+                    setLandData([])
+                    onCleanSelected()
+                  }}>
                     取消选择
                   </a>
                 </span>
