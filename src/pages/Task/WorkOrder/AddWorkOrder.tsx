@@ -51,6 +51,7 @@ export default function AddWorkOrder( ) {
   const useWatch = Form.useWatch;
   const orderType = useWatch('orderType', form);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [tableData, setTableData] = useState<Land.Item[]>([]);
 
   const handleColumns = useCallback((simple: boolean) => {
     if (simple) {
@@ -231,6 +232,7 @@ export default function AddWorkOrder( ) {
     // 切换场地
     // 清空地块
     setLandData([])
+    form.setFieldsValue({ estimatedWorkTime: undefined });
   }, []);
 
   const handleGroupChange = useCallback((value: any, option: any) => {
@@ -239,7 +241,7 @@ export default function AddWorkOrder( ) {
       label: item.robotCode,
       value: item.robotId
     })))
-
+    form.setFieldsValue({ robotIds: [] })
   }, []);
 
   const getTimeClick = () => {
@@ -448,41 +450,32 @@ export default function AddWorkOrder( ) {
     }
   }, [isSpray, form]);
 
+
+  const robotIds = useWatch('robotIds', form);
   // 在你的函数组件内部（Form 渲染之前）
-  // useEffect(() => {
-  //   const landIds = landData.map(item => item.landId);
-  //   const robotIds = form.getFieldValue('robotIds');
-  //   const orderType = form.getFieldValue('orderType');
-  //   console.log('xxxxxx');
-  //   // 判断必要条件是否满足
-  //   const hasLand = landIds && landIds.length > 0;
-  //   const hasOrderType = orderType !== undefined && orderType !== null;
-  //   const hasRobot = isSpray
-  //     ? true // 如果是喷洒，不需要机器人
-  //     : (robotIds && robotIds.length > 0);
-  //
-  //   if (hasLand && hasOrderType && hasRobot) {
-  //     // 自动获取清洗时间
-  //     getTime({ landIds, robotIds, orderType }).then(res => {
-  //       const { code, msg, data } = res;
-  //       if (code === 0) {
-  //         form.setFieldsValue({ estimatedWorkTime: data });
-  //       } else {
-  //         // 清空或保留旧值？这里选择清空
-  //         form.setFieldsValue({ estimatedWorkTime: undefined });
-  //         console.warn('获取清洗时间失败:', msg);
-  //       }
-  //     });
-  //   } else {
-  //     // 条件不满足时，清空清洗时间
-  //     form.setFieldsValue({ estimatedWorkTime: undefined });
-  //   }
-  // }, [
-  //   landData,           // 地块变化
-  //   form.getFieldValue('robotIds'),   // 机器人变化
-  //   form.getFieldValue('orderType'), // 工单类型变化
-  //   isSpray             // 模式切换（喷洒/非喷洒）
-  // ]);
+  useEffect(() => {
+    const landIds = landData.map(item => item.landId);
+    const hasLand = landIds.length > 0;
+    const hasOrderType = orderType !== null;
+    const hasRobot = isSpray || (robotIds && robotIds.length > 0);
+
+    if (hasLand && hasOrderType && hasRobot) {
+      getTime({ landIds, robotIds, orderType }).then(res => {
+        if (res.code === 0) {
+          form.setFieldsValue({ estimatedWorkTime: res.data });
+        } else {
+          form.setFieldsValue({ estimatedWorkTime: undefined });
+        }
+      });
+    } else {
+      form.setFieldsValue({ estimatedWorkTime: undefined });
+    }
+  }, [
+    landData,
+    robotIds,
+    orderType,
+    isSpray
+  ]);
 
   return (
     <Row gutter={32} style={{ background: '#fff'}}>
@@ -498,26 +491,6 @@ export default function AddWorkOrder( ) {
             style={{ maxWidth: 600 }}
             form={form}
             onFinish={onFinish}
-            onValuesChange={(_, allValues) => {
-              const { robotIds, orderType } = allValues;
-              const landIds = landData.map(item => item.landId);
-
-              const hasLand = landIds.length > 0;
-              const hasOrderType = orderType != null;
-              const hasRobot = isSpray || (robotIds && robotIds.length > 0);
-
-              if (hasLand && hasOrderType && hasRobot) {
-                getTime({ landIds, robotIds, orderType }).then(res => {
-                  if (res.code === 0) {
-                    form.setFieldsValue({ estimatedWorkTime: res.data });
-                  } else {
-                    form.setFieldsValue({ estimatedWorkTime: undefined });
-                  }
-                });
-              } else {
-                form.setFieldsValue({ estimatedWorkTime: undefined });
-              }
-            }}
           >
             <Form.Item label='场地名称' rules={[{ required: true, message: '请选择场地名称' }]} name="areaId">
               <Select
@@ -673,7 +646,7 @@ export default function AddWorkOrder( ) {
                   data: { records, total },
                   code
                 } = await land({...params, areaId: landId });
-
+                setTableData(records);
                 return { data: records, success: !code, total: total };
               }}
               rowKey='landId'
@@ -690,6 +663,14 @@ export default function AddWorkOrder( ) {
                 selectedRowKeys,
                 onChange: (keys) => {
                   setSelectedRowKeys(keys); // 同步用户操作
+                  const selectedRecords = tableData
+                    .filter(record => keys.includes(record.landId))
+                    .map((record, index) => ({
+                      ...record,
+                      sort: index
+                    }));
+
+                  setLandData(selectedRecords);
                 },
                 selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT],
                 getCheckboxProps: (record: Land.Item) => ({
@@ -712,16 +693,7 @@ export default function AddWorkOrder( ) {
                 );
               }}
               tableAlertOptionRender={({ selectedRows }) => {
-                return (
-                  <Space size={16}>
-                    <a onClick={() => {
-                      setOpen(false)
-                      addLand(selectedRows)
-                    }}>
-                      添加
-                    </a>
-                  </Space>
-                );
+                return false
               }}
             />
           </Modal>
