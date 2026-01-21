@@ -67,7 +67,7 @@ const Login: React.FC = () => {
       <div
         style={{
           flex: '1',
-          padding: '32px 0'
+          padding: '0 0 32px 0'
         }}
       >
         <LoginForm
@@ -75,8 +75,8 @@ const Login: React.FC = () => {
             minWidth: 280,
             maxWidth: '75vw'
           }}
-          logo={<img alt='logo' src='/logo/logo.png' style={{ marginBottom: '-6px' }} />}
-          title='光伏电站智能维护管理系统'
+          logo={<img alt='logo' src='/logo/logo2.png' style={{ marginBottom: '-6px' }} />}
+          // title='中广核贵州分公司光伏电站智能运维管理系统'
           subTitle={' '}
           initialValues={{
             autoLogin: true
