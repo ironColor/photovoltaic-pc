@@ -85,6 +85,13 @@ export default function AddWorkOrder( ) {
                       sort: index
                     }))
                 );
+                const newMap = {};
+                  landData
+                    .filter(item => item.landId !== record.landId).forEach(row => {
+                    newMap[row.landId] = row;
+                  });
+
+                setSelectedRecordsMap(newMap)
                 // 同步取消选中
                 setSelectedRowKeys(landData
                     .filter(item => item.landId !== record.landId)
@@ -237,23 +244,6 @@ export default function AddWorkOrder( ) {
     // 选择机组后默认全部机器人
     form.setFieldsValue({ robotIds: option.robots.map(item => item.robotId) })
   }, []);
-
-  const getTimeClick = () => {
-    getTime({ landIds: landData.map(item => item.landId), robotIds: form.getFieldValue('robotIds'), orderType }).then(res => {
-      const { code, msg, data } = res;
-      if (code !== 0) {
-        message.error(msg || '获取失败');
-        return;
-      } else {
-        message.success('获取成功');
-        form.setFieldsValue({
-          estimatedWorkTime: data
-        })
-        return;
-      }
-    });
-  }
-
 
   const onFinish = async (value: any) => {
     const orderId = searchParams.get('orderId');
@@ -588,9 +578,6 @@ export default function AddWorkOrder( ) {
             >
               <Input
                 disabled
-                // suffix={
-                //   <Button type="primary" onClick={getTimeClick}>获取</Button>
-                // }
               />
             </Form.Item>
             <Form.Item label="起飞点" rules={[{ required: true, message: '请选起飞点' }]} name="takeoffPointId">
@@ -675,12 +662,8 @@ export default function AddWorkOrder( ) {
                   setSelectedRecordsMap(newMap);
 
                   // 同步 landData（按 selectedRowKeys 顺序）
-                  const newData = keys
-                    .map(id => newMap[id])
-                    .filter(Boolean)
+                  const newData = Object.values(newMap)
                     .map((item, i) => ({ ...item, sort: i }));
-                  console.log(11, selectedRecordsMap);
-
                   setLandData(newData);
                 },
                 selections: [Table.SELECTION_INVERT], // 移除全选，避免误导
