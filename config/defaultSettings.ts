@@ -15,7 +15,7 @@ const Settings: ProLayoutProps & {
   fixedHeader: true,
   fixSiderbar: true,
   colorWeak: false,
-  title: '光伏电站智能维护管理系统',
+  title: '中广核贵州分公司光伏电站智能运维管理系统',
   pwa: true,
   iconfontUrl: '',
   token: {

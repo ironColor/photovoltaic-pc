@@ -238,7 +238,7 @@ const WorkOrder: React.FC = () => {
           style={{ position: 'absolute' }}
           headerTitle={<b>工单管理</b>}
           cardBordered={true}
-          rowKey='parentTaskId'
+          rowKey='orderId'
           search={{
             labelWidth: 'auto'
           }}

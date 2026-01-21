@@ -85,7 +85,7 @@ const TrackPoint = () => {
           style={{ position: 'absolute' }}
           headerTitle={<b>轨迹点</b>}
           cardBordered={true}
-          rowKey='parentTaskId'
+          rowKey='pointId'
           search={{
             labelWidth: 'auto'
           }}

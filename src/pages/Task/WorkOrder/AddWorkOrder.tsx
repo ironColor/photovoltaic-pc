@@ -1,6 +1,7 @@
 import { Badge, Button, Col, Form, Input, message, Modal, Row, Select, Space, Table, Tag } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Map from '@/pages/components/Map';
+import moment from 'moment';
 import { PlusOutlined } from '@ant-design/icons';
 import { DragSortTable, ProTable } from '@ant-design/pro-components';
 import { land } from '@/pages/Base/service';
@@ -51,7 +52,8 @@ export default function AddWorkOrder( ) {
   const useWatch = Form.useWatch;
   const orderType = useWatch('orderType', form);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const [tableData, setTableData] = useState<Land.Item[]>([]);
+  const [landName, setLandName] = useState('');
+  const [selectedRecordsMap, setSelectedRecordsMap] = useState<Record<string, Land.Item>>({});
 
   const handleColumns = useCallback((simple: boolean) => {
     if (simple) {
@@ -205,16 +207,6 @@ export default function AddWorkOrder( ) {
     return Math.abs(record.k) > Number(k);
   };
 
-  const addLand = (newItems: any[]) => {
-    const existingIds = new Set(landData.map(item => item.landId));
-    const uniqueNewItems = newItems.filter(item => !existingIds.has(item.landId)).map((item ,index) => ({
-      ...item,
-      sort: index + landData.length,
-    }));
-    setLandData(prev => [...prev, ...uniqueNewItems]);
-    // setSelectedRowKeys(uniqueNewItems.map(item => item.landId));
-  }
-
   const handleDragSortEnd = (_: number, __: number, newDataSource: any) => {
     setLandData(
       newDataSource.map((item: any, index: number) => {
@@ -228,7 +220,8 @@ export default function AddWorkOrder( ) {
   };
 
   const handleLandNameChange = useCallback((value: any, option: any) => {
-    setLandId(option.areaId)
+    setLandId(option.areaId);
+    setLandName(option.label);
     // 切换场地
     // 清空地块
     setLandData([])
@@ -241,7 +234,8 @@ export default function AddWorkOrder( ) {
       label: item.robotCode,
       value: item.robotId
     })))
-    form.setFieldsValue({ robotIds: [] })
+    // 选择机组后默认全部机器人
+    form.setFieldsValue({ robotIds: option.robots.map(item => item.robotId) })
   }, []);
 
   const getTimeClick = () => {
@@ -477,6 +471,16 @@ export default function AddWorkOrder( ) {
     isSpray
   ]);
 
+
+  useEffect(() => {
+    console.log('landName', landName);
+    if (landName && orderType) {
+      const today = moment().format('YYYY-MM-DD');
+      form.setFieldsValue({ orderName: `${today}-${landName}-${orderType === 1 ? '干洗' : '水洗'}` });
+    }
+
+  }, [landName, orderType]);
+
   return (
     <Row gutter={32} style={{ background: '#fff'}}>
       <Col flex='650px'>
@@ -575,9 +579,9 @@ export default function AddWorkOrder( ) {
               </Form.Item>
             }
             <Form.Item
-              label="清洗时间"
+              label="清洗时长"
               name="estimatedWorkTime"
-              rules={[{ required: true, message: '请获取清洗时间' }]}
+              rules={[{ required: true, message: '请获取清洗时长' }]}
               getValueProps={(value) => ({
                 value: value ? formatTime(value) : ''
               })}
@@ -646,7 +650,6 @@ export default function AddWorkOrder( ) {
                   data: { records, total },
                   code
                 } = await land({...params, areaId: landId });
-                setTableData(records);
                 return { data: records, success: !code, total: total };
               }}
               rowKey='landId'
@@ -660,21 +663,29 @@ export default function AddWorkOrder( ) {
               }}
               dateFormatter='string'
               rowSelection={{
-                selectedRowKeys,
-                onChange: (keys) => {
-                  setSelectedRowKeys(keys); // 同步用户操作
-                  const selectedRecords = tableData
-                    .filter(record => keys.includes(record.landId))
-                    .map((record, index) => ({
-                      ...record,
-                      sort: index
-                    }));
+                selectedRowKeys: Object.keys(selectedRecordsMap).map(Number),
+                onChange: (keys, rows) => {
+                  const newMap = { ...selectedRecordsMap };
 
-                  setLandData(selectedRecords);
+                  // 只做一件事：补充当前页选中的 row
+                  rows.forEach(row => {
+                    newMap[row.landId] = row;
+                  });
+
+                  setSelectedRecordsMap(newMap);
+
+                  // 同步 landData（按 selectedRowKeys 顺序）
+                  const newData = keys
+                    .map(id => newMap[id])
+                    .filter(Boolean)
+                    .map((item, i) => ({ ...item, sort: i }));
+                  console.log(11, selectedRecordsMap);
+
+                  setLandData(newData);
                 },
-                selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT],
-                getCheckboxProps: (record: Land.Item) => ({
-                  disabled: isSlopeTooLarge(record),
+                selections: [Table.SELECTION_INVERT], // 移除全选，避免误导
+                getCheckboxProps: (record) => ({
+                  disabled: isSlopeTooLarge(record)
                 })
               }}
               tableAlertRender={({ selectedRowKeys, onCleanSelected }) => {

@@ -45,7 +45,7 @@ export default [
         redirect: '/base/area'
       },
       {
-        name: 'GIS展示',
+        name: '数字电站',
         path: '/base/area',
         component: './Base/Area'
       },
@@ -64,6 +64,32 @@ export default [
       {
         path: '/task',
         redirect: '/task/monitor'
+      },
+      {
+        name: '工单设计',
+        path: '/task/workOrder',
+        routes: [
+          {
+            path: '/task/workOrder',
+            redirect: '/task/workOrder/list'
+          },
+          {
+            path: '/task/workOrder/list',
+            component: './Task/WorkOrder'
+          },
+          {
+            path: '/task/workOrder/add',
+            component: './Task/WorkOrder/AddWorkOrder'
+          },
+          {
+            path: '/task/workOrder/execute',
+            component: './Task/WorkOrder/ExecuteWork'
+          },
+          {
+            path: '/task/workOrder/subTask',
+            component: './Task/WorkOrder/workTaskList'
+          }
+        ]
       },
       // {
       //   name: '实时监控',
@@ -126,32 +152,6 @@ export default [
         ]
       },
       {
-        name: '工单设计',
-        path: '/task/workOrder',
-        routes: [
-          {
-            path: '/task/workOrder',
-            redirect: '/task/workOrder/list'
-          },
-          {
-            path: '/task/workOrder/list',
-            component: './Task/WorkOrder'
-          },
-          {
-            path: '/task/workOrder/add',
-            component: './Task/WorkOrder/AddWorkOrder'
-          },
-          {
-            path: '/task/workOrder/execute',
-            component: './Task/WorkOrder/ExecuteWork'
-          },
-          {
-            path: '/task/workOrder/subTask',
-            component: './Task/WorkOrder/workTaskList'
-          }
-        ]
-      },
-      {
         name: '工单日志',
         path: '/task/orderLog',
         routes: [
@@ -186,15 +186,15 @@ export default [
         redirect: '/device/machine'
       },
       {
-        name: '机器管理',
+        name: '机器人管理',
         path: '/device/machine',
         component: './Device/Machine'
       },
-      {
-        name: 'RTK管理',
-        path: '/device/rtk',
-        component: './Device/RTK'
-      },
+      // {
+      //   name: 'RTK管理',
+      //   path: '/device/rtk',
+      //   component: './Device/RTK'
+      // },
       {
         name: '参数管理',
         path: '/device/params',
