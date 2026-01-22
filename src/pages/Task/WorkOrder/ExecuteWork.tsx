@@ -251,9 +251,14 @@ export default function ExecuteWork() {
     return statusColors[status] || 'red';
   }, []);
 
+  useEffect(() => {
+    if (subTaskId) {
+      setColKey([subTaskId.toString()])
+    }
+  }, [subTaskId]);
+
   const timelineItems = useMemo(() => {
     if (!dataArr?.length) return [];
-    console.log(111111, dataArr);
     return dataArr.map((item: any) => {
       const firstSubTask = item.subTasks?.[0];
       const execStatus = firstSubTask?.execStatus;
@@ -287,7 +292,11 @@ export default function ExecuteWork() {
               <Collapse
                 size="small"
                 activeKey={colKey} // 直接使用状态
-                onChange={(keys) => setColKey(keys as string[])}
+                // onChange={(keys) => {
+                //   const newKeys = keys.filter(item => item === subTaskId?.toString());
+                //   console.log(111122, keys, newKeys, subTaskId);
+                //   setColKey(keys)
+                // }}
               >
                 {item.subTasks.map((task: any, index: number) => (
                   <Panel

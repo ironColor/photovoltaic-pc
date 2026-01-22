@@ -34,7 +34,7 @@ function formatTime(minutes: number) {
 
 export default function AddWorkOrder( ) {
   const mapRef = useRef<any>();
-  const [complete, setComplete] = useState(false);
+  const [, setComplete] = useState(false);
   const [form] = Form.useForm();
   const [open, setOpen] = useState<boolean>(false);
   // landData 选中的地块数据
@@ -54,6 +54,7 @@ export default function AddWorkOrder( ) {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [landName, setLandName] = useState('');
   const [selectedRecordsMap, setSelectedRecordsMap] = useState<Record<string, Land.Item>>({});
+  const [page, setPage] = useState(1);
 
   const handleColumns = useCallback((simple: boolean) => {
     if (simple) {
@@ -93,9 +94,9 @@ export default function AddWorkOrder( ) {
 
                 setSelectedRecordsMap(newMap)
                 // 同步取消选中
-                setSelectedRowKeys(landData
-                    .filter(item => item.landId !== record.landId)
-                    .map(item => item.landId))
+                // setSelectedRowKeys(landData
+                //     .filter(item => item.landId !== record.landId)
+                //     .map(item => item.landId))
               }}
             >
               删除
@@ -324,8 +325,8 @@ export default function AddWorkOrder( ) {
 
         setRobotsId(detailData.robotIds);
         setLandData(detailData.landList);
-        // 同步选中
-        setSelectedRowKeys(detailData.landList.map(item => item.landId))
+        // // 同步选中
+        // setSelectedRowKeys(detailData.landList.map(item => item.landId))
 
       } catch (err) {
         console.error('数据加载异常:', err);
@@ -463,7 +464,6 @@ export default function AddWorkOrder( ) {
 
 
   useEffect(() => {
-    console.log('landName', landName);
     if (landName && orderType) {
       const today = moment().format('YYYY-MM-DD');
       form.setFieldsValue({ orderName: `${today}-${landName}-${orderType === 1 ? '干洗' : '水洗'}` });
@@ -633,6 +633,10 @@ export default function AddWorkOrder( ) {
                 isSlopeTooLarge(record) ? 'row-slope-too-large' : ''
               }
               request={async params => {
+                if (params.current !== page) {
+                  setPage(params.current)
+                }
+
                 const {
                   data: { records, total },
                   code
@@ -650,20 +654,28 @@ export default function AddWorkOrder( ) {
               }}
               dateFormatter='string'
               rowSelection={{
-                selectedRowKeys: Object.keys(selectedRecordsMap).map(Number),
+                selectedRowKeys: landData.map(item => item.landId),
                 onChange: (keys, rows) => {
                   const newMap = { ...selectedRecordsMap };
 
                   // 只做一件事：补充当前页选中的 row
                   rows.forEach(row => {
+                    row.page = page
                     newMap[row.landId] = row;
                   });
-
                   setSelectedRecordsMap(newMap);
-
                   // 同步 landData（按 selectedRowKeys 顺序）
                   const newData = Object.values(newMap)
-                    .map((item, i) => ({ ...item, sort: i }));
+                    .map((item, i) => {
+                      if (item.page !== page) {
+                        return { ...item, sort: i  }
+                      } else {
+                        // 是当前页的 则要通过keys来判断
+                        if (keys.includes(item.landId)) {
+                          return { ...item, sort: i  }
+                        }
+                      }
+                    }).filter(item => item !== undefined);
                   setLandData(newData);
                 },
                 selections: [Table.SELECTION_INVERT], // 移除全选，避免误导
@@ -685,9 +697,6 @@ export default function AddWorkOrder( ) {
                 </span>
                   </Space>
                 );
-              }}
-              tableAlertOptionRender={({ selectedRows }) => {
-                return false
               }}
             />
           </Modal>

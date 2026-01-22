@@ -21,7 +21,8 @@ const Index: React.FC<DisplayProps> = ({ count, status, voltage }) => {
           display: 'inline-flex',
           columnGap: '24px',
           marginRight: '48px',
-          fontWeight: '600'
+          fontWeight: '600',
+          border: '1px solid black'
         }}
       >
         <div>串口参数：{params ? params : '暂无数据'}</div>
