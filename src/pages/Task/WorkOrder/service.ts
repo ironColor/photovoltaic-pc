@@ -149,3 +149,9 @@ export const getParameter = async (params: any) => {
     method: 'GET'
   });
 }
+
+export const getLandListAll = async (id: any) => {
+  return request<API.R<any>>(`/ppc/ppcLand/list/${id}`, {
+    method: 'GET'
+  });
+}
