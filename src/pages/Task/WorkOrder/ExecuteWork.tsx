@@ -189,6 +189,9 @@ export default function ExecuteWork() {
         message.error('执行失败');
       } else if (data.commandCode === 23) {
         message.success('下一喷洒任务已启动');
+      } else if (data.commandCode === 132) {
+        //刷新页面
+        call()
       }
     },
     onError: event => {

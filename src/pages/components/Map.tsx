@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react';
+import React, { useEffect, useImperativeHandle, useRef } from 'react';
 import AMapLoader from '@amap/amap-jsapi-loader';
 import '@amap/amap-jsapi-types';
 import gcoord from 'gcoord';
@@ -7,16 +7,60 @@ import gcoord from 'gcoord';
   securityJsCode: '54e31215732849cfe60cf61458293212'
 };
 
+type MapProps = {
+  styles?: React.CSSProperties;
+  complete?: () => void;
+  onLandClick?: (land: any) => void;
+}
+
+function isWithinLastMonth(timeStr) {
+  if (!timeStr) return false;
+
+  // 兼容 Safari：把 "YYYY-MM-DD HH:mm:ss" 转成 ISO
+  const time = new Date(timeStr.replace(' ', 'T'));
+  if (isNaN(time.getTime())) return false;
+
+  const now = new Date();
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(now.getMonth() - 1);
+
+  return time >= oneMonthAgo && time <= now;
+}
+
+
 const Map: React.ForwardRefRenderFunction<
   {
     execute?: (position: [], air?: [number, number]) => void;
     log?: (lineArr: Array<[number, number]>) => void;
     home?: (regionArr: any, regionId: number) => void;
   },
-  { styles?: React.CSSProperties; complete?: any }
+  MapProps
 > = (props, ref) => {
   const AMap = useRef<any>(null);
   const map = useRef<any>(null);
+  const polygonMap = useRef<Record<string, any>>({}); // 缓存所有 polygon 实例，用于高亮控制
+
+
+  const highlightLand = (landId: string | number) => {
+    // 重置所有地块为默认样式
+    Object.values(polygonMap.current).forEach((poly: any) => {
+      poly.setOptions({
+        fillColor: '#ffcccc',
+        fillOpacity: 0.4,
+        strokeWeight: 1,
+      });
+    });
+
+    // 高亮目标地块
+    const targetPoly = polygonMap.current[landId];
+    if (targetPoly) {
+      targetPoly.setOptions({
+        fillColor: 'yellow',
+        fillOpacity: 0.6,
+        strokeWeight: 2,
+      });
+    }
+  };
 
   const init = async () => {
     AMapLoader.load({
@@ -43,6 +87,10 @@ const Map: React.ForwardRefRenderFunction<
   const initLand = (regionArr: any) => {
     if (map.current) {
       map.current.clearMap();
+      polygonMap.current = {};
+
+      if (!regionArr?.length) return;
+
       let totalLng = 0;
       let totalLat = 0;
       let validCount = 0;
@@ -71,7 +119,7 @@ const Map: React.ForwardRefRenderFunction<
       }
 
 
-      regionArr?.map((item: any, index) => {
+      regionArr?.map((item: any) => {
         const polygonPath = item?.landPoints?.map((point: any) => {
           const result = gcoord.transform([point.lon, point.lat], gcoord.WGS84, gcoord.GCJ02);
           return new AMap.current.LngLat(result[0], result[1]);
@@ -80,11 +128,22 @@ const Map: React.ForwardRefRenderFunction<
         const polygon = new AMap.current.Polygon({
           path: polygonPath,
           strokeOpacity: 0,
-          fillColor: 'red'
+          fillColor: item.isSlopeTooLarge ? 'red' : isWithinLastMonth(item.lastCleanTime) ? 'green' : 'grey',
+          cursor: item.isSlopeTooLarge ? '' : 'pointer',
+          clickable: true,
         });
+
+        // polygon.on('click', () => {
+        //   // 1. 高亮当前地块（可扩展为“单选”或“多选”）
+        //   highlightLand(item.landId)
+        //
+        //   // 2. 通知父组件
+        //   props.onLandClick?.(item);
+        // });
 
 
         map.current.add(polygon);
+        polygonMap.current[item.landId] = polygon;
 
         const center = polygon.getBounds().getCenter();
 
@@ -101,7 +160,16 @@ const Map: React.ForwardRefRenderFunction<
             textAlign: 'center',
           },
           zIndex: 200,
+          clickable: true
         });
+
+        // text.on('click', () => {
+        //   // 1. 高亮当前地块（可扩展为“单选”或“多选”）
+        //   highlightLand(item.landId)
+        //
+        //   // 2. 通知父组件
+        //   props.onLandClick?.(item);
+        // })
 
         map.current.add(text);
       });
@@ -121,6 +189,36 @@ const Map: React.ForwardRefRenderFunction<
       }
     }
   };
+
+  const highlightLandsByIds = (landIds: any) => {
+    if (!map.current) return;
+
+    landIds.forEach(id => {
+      const targetPoly = polygonMap.current[id];
+      if (targetPoly) {
+        targetPoly.setOptions({
+          fillColor: 'yellow',
+          fillOpacity: 0.6,
+          strokeWeight: 2,
+          extData: {
+            preColor: targetPoly.getOptions().fillColor
+          }
+        });
+      }
+    })
+  }
+
+  const resetLand = id => {
+    const targetPoly = polygonMap.current[id];
+
+    if (targetPoly) {
+      targetPoly.setOptions({
+        fillColor: targetPoly.getExtData().preColor,
+        fillOpacity: 0.6,
+        strokeWeight: 2,
+      });
+    }
+  }
 
 
   const home = (regionArr: any, landName?: number) => {
@@ -394,6 +492,8 @@ const Map: React.ForwardRefRenderFunction<
     log: (lineArr: Array<[number, number]>) => log(lineArr),
     home: (regionArr: any, regionId: number) => home(regionArr, regionId),
     initLand: (regionArr: any, regionId: number) => initLand(regionArr, regionId),
+    highlightLandsByIds: (landIds: any) => highlightLandsByIds(landIds),
+    resetLand: id => resetLand(id)
   }));
 
   return (

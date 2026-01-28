@@ -32,189 +32,6 @@ function formatTime(minutes: number) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-const DemoData = [
-  {
-    "landId": 4363,
-    "landName": "13-3-3",
-    "landType": "1",
-    "landHeight": 1196.96,
-    "landPoints": [
-      {
-        "serial": 0,
-        "alt": 1197.662963,
-        "lon": 105.370917,
-        "lat": 25.947499
-      },
-      {
-        "serial": 1,
-        "alt": 1198.908366,
-        "lon": 105.37092,
-        "lat": 25.947538
-      },
-      {
-        "serial": 2,
-        "alt": 1195.944885,
-        "lon": 105.371068,
-        "lat": 25.947537
-      },
-      {
-        "serial": 3,
-        "alt": 1195.333806,
-        "lon": 105.371066,
-        "lat": 25.947498
-      }
-    ],
-    "areaId": 33,
-    "plot": 13,
-    "array": 3,
-    "str": 3,
-    "k": 15.99,
-    "dataSource": "model",
-    "landArea": 64.24,
-    "createName": "xunda1",
-    "createTime": "2025-12-19 10:59:57",
-    "updateName": "xunda1",
-    "updateTime": "2025-12-19 10:59:57",
-    "page": 7,
-    "sort": 0
-  },
-  {
-    "landId": 5122,
-    "landName": "77-3-98",
-    "landType": "1",
-    "landHeight": 1166.21,
-    "landPoints": [
-      {
-        "serial": 0,
-        "alt": 1166.081284,
-        "lon": 105.376275,
-        "lat": 25.946781
-      },
-      {
-        "serial": 1,
-        "alt": 1167.324346,
-        "lon": 105.376276,
-        "lat": 25.94682
-      },
-      {
-        "serial": 2,
-        "alt": 1165.734497,
-        "lon": 105.376425,
-        "lat": 25.94682
-      },
-      {
-        "serial": 3,
-        "alt": 1165.693185,
-        "lon": 105.376425,
-        "lat": 25.946781
-      }
-    ],
-    "areaId": 33,
-    "plot": 77,
-    "array": 3,
-    "str": 98,
-    "k": 15.99,
-    "dataSource": "model",
-    "landArea": 64.61,
-    "createName": "xunda1",
-    "createTime": "2025-12-19 10:59:57",
-    "updateName": "xunda1",
-    "updateTime": "2025-12-19 10:59:57",
-    "page": 2,
-    "sort": 1
-  },
-  {
-    "landId": 5378,
-    "landName": "78-3-20",
-    "landType": "1",
-    "landHeight": 1118.6,
-    "landPoints": [
-      {
-        "serial": 0,
-        "alt": 1119.503275,
-        "lon": 105.376491,
-        "lat": 25.945917
-      },
-      {
-        "serial": 1,
-        "alt": 1120.518742,
-        "lon": 105.376493,
-        "lat": 25.945956
-      },
-      {
-        "serial": 2,
-        "alt": 1118.253972,
-        "lon": 105.376641,
-        "lat": 25.945957
-      },
-      {
-        "serial": 3,
-        "alt": 1116.11228,
-        "lon": 105.37664,
-        "lat": 25.945918
-      }
-    ],
-    "areaId": 33,
-    "plot": 78,
-    "array": 3,
-    "str": 20,
-    "k": 13.17,
-    "dataSource": "model",
-    "landArea": 64.2,
-    "createName": "xunda1",
-    "createTime": "2025-12-19 10:59:57",
-    "updateName": "xunda1",
-    "updateTime": "2025-12-19 10:59:57",
-    "page": 2,
-    "sort": 2
-  },
-  {
-    "landId": 5634,
-    "landName": "79-8-7",
-    "landType": "1",
-    "landHeight": 1161.58,
-    "landPoints": [
-      {
-        "serial": 0,
-        "alt": 1161.328424,
-        "lon": 105.373756,
-        "lat": 25.94669
-      },
-      {
-        "serial": 1,
-        "alt": 1162.28687,
-        "lon": 105.373757,
-        "lat": 25.946728
-      },
-      {
-        "serial": 2,
-        "alt": 1162.530944,
-        "lon": 105.373907,
-        "lat": 25.946725
-      },
-      {
-        "serial": 3,
-        "alt": 1160.177371,
-        "lon": 105.373906,
-        "lat": 25.946686
-      }
-    ],
-    "areaId": 33,
-    "plot": 79,
-    "array": 8,
-    "str": 7,
-    "k": 12.78,
-    "dataSource": "model",
-    "landArea": 65.06,
-    "createName": "xunda1",
-    "createTime": "2025-12-19 10:59:57",
-    "updateName": "xunda1",
-    "updateTime": "2025-12-19 10:59:57",
-    "page": 2,
-    "sort": 3
-  }
-]
-
 export default function AddWorkOrder( ) {
   const mapRef = useRef<any>();
   const [, setComplete] = useState(false);
@@ -234,7 +51,6 @@ export default function AddWorkOrder( ) {
   const [k, setK] = useState();
   const useWatch = Form.useWatch;
   const orderType = useWatch('orderType', form);
-  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [landName, setLandName] = useState('');
   const [selectedRecordsMap, setSelectedRecordsMap] = useState<Record<string, Land.Item>>({});
   const [page, setPage] = useState(1);
@@ -275,12 +91,8 @@ export default function AddWorkOrder( ) {
                     .filter(item => item.landId !== record.landId).forEach(row => {
                     newMap[row.landId] = row;
                   });
-
+                mapRef.current.resetLand(record.landId.toString())
                 setSelectedRecordsMap(newMap)
-                // 同步取消选中
-                // setSelectedRowKeys(landData
-                //     .filter(item => item.landId !== record.landId)
-                //     .map(item => item.landId))
               }}
             >
               删除
@@ -393,7 +205,7 @@ export default function AddWorkOrder( ) {
         search: false
       }
     ];
-  }, [landData])
+  }, [landData, mapRef])
 
   const isSlopeTooLarge = (record: any) => {
     return Math.abs(record.k) > Number(k);
@@ -418,8 +230,10 @@ export default function AddWorkOrder( ) {
         message.error(msg || '获取全部地块数据失败');
         return;
       }
-      console.log(res);
-      setAll(data.filter(item => item.landName !== '76-8-4'))
+      setAll(data.map(item => ({
+        ...item,
+        isSlopeTooLarge: isSlopeTooLarge(item)
+      })))
     })
   }
 
@@ -428,6 +242,11 @@ export default function AddWorkOrder( ) {
       mapRef.current.initLand(all)
     }
   }, [all]);
+
+  const handleLandClick = (land: any) => {
+    console.log('用户点击了地块:', land.landName, land.landId);
+    // 可以打开抽屉、设置表单、高亮列表等
+  };
 
 
   const handleLandNameChange = useCallback((value: any, option: any) => {
@@ -439,7 +258,7 @@ export default function AddWorkOrder( ) {
     form.setFieldsValue({ estimatedWorkTime: undefined });
 
     getAllLand(option.areaId)
-  }, []);
+  }, [k]);
 
 
   const handleGroupChange = useCallback((value: any, option: any) => {
@@ -560,9 +379,8 @@ export default function AddWorkOrder( ) {
   }, []);
 
   useEffect(() => {
-    console.log(landData);
     if (landData.length > 0) {
-        mapRef.current.home(landData)
+        mapRef.current.highlightLandsByIds(landData.map(item => item.landId.toString()))
     }
     form.setFieldsValue({
       landIds: landData
@@ -633,7 +451,6 @@ export default function AddWorkOrder( ) {
 
   const isSpray = orderType === 2;
 
-// 当是喷洒时，清空并移除相关字段值（可选，避免残留）
   useEffect(() => {
     if (isSpray) {
       form.setFieldsValue({
@@ -644,9 +461,8 @@ export default function AddWorkOrder( ) {
     }
   }, [isSpray, form]);
 
-
   const robotIds = useWatch('robotIds', form);
-  // 在你的函数组件内部（Form 渲染之前）
+
   useEffect(() => {
     const landIds = landData.map(item => item.landId);
     const hasLand = landIds.length > 0;
@@ -683,7 +499,7 @@ export default function AddWorkOrder( ) {
   return (
     <Row gutter={32} style={{ background: '#fff'}}>
       <Col flex='650px'>
-        <Map complete={setComplete} ref={mapRef} />
+        <Map complete={setComplete} ref={mapRef} onLandClick={handleLandClick} />
       </Col>
       <Col flex='auto'>
         <div style={{ padding: '24px'}}>
