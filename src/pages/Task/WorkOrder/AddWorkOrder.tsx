@@ -230,18 +230,18 @@ export default function AddWorkOrder( ) {
         message.error(msg || '获取全部地块数据失败');
         return;
       }
-      setAll(data.map(item => ({
-        ...item,
-        isSlopeTooLarge: isSlopeTooLarge(item)
-      })))
+      setAll(data)
     })
   }
 
   useEffect(() => {
-    if (all.length > 0) {
-      mapRef.current.initLand(all)
+    if (all.length > 0 && k) {
+      mapRef.current.initLand(all.map(item => ({
+        ...item,
+        isSlopeTooLarge: isSlopeTooLarge(item)
+      })));
     }
-  }, [all]);
+  }, [all, k]);
 
   const handleLandClick = (land: any) => {
     console.log('用户点击了地块:', land.landName, land.landId);
@@ -345,11 +345,15 @@ export default function AddWorkOrder( ) {
           estimatedWorkTime: detailData.estimatedWorkTime,
           robotIds: detailData.robotIds
         });
+
+
+
         // 设置areaID 用于添加地块时，接口获取对应场地下的地块信息
         setLandId(detailData.areaId);
 
         setRobotsId(detailData.robotIds);
         setLandData(detailData.landList);
+        getAllLand(detailData.areaId)
         // // 同步选中
         // setSelectedRowKeys(detailData.landList.map(item => item.landId))
 
@@ -360,7 +364,6 @@ export default function AddWorkOrder( ) {
     };
 
     fetchData();
-
 
     getParameter({
       current: 1,
@@ -376,17 +379,22 @@ export default function AddWorkOrder( ) {
         setK(records[0].parameterValue)
       }
     })
-  }, []);
 
+
+  }, []);
+  // 高亮地图上的地块
   useEffect(() => {
-    if (landData.length > 0) {
-        mapRef.current.highlightLandsByIds(landData.map(item => item.landId.toString()))
+    // 斜率只能通过接口获取
+    if (landData.length > 0 && all.length > 0 && k) {
+      requestAnimationFrame(() => {
+        mapRef.current?.highlightLandsByIds(landData.map(item => item.landId.toString()));
+      })
     }
     form.setFieldsValue({
       landIds: landData
     })
-    }, [landData]);
-
+    }, [landData, all, k]);
+  // 选择地块之后，请求接口，获取对应下拉数据
   useEffect(() => {
       if (landId) {
         getPointOptions({ areaId: landId, type: 10}).then((res: any) => {
@@ -462,7 +470,7 @@ export default function AddWorkOrder( ) {
   }, [isSpray, form]);
 
   const robotIds = useWatch('robotIds', form);
-
+  // 自动化 清洗时间
   useEffect(() => {
     const landIds = landData.map(item => item.landId);
     const hasLand = landIds.length > 0;
@@ -487,7 +495,7 @@ export default function AddWorkOrder( ) {
     isSpray
   ]);
 
-
+  // 自动化工单名称
   useEffect(() => {
     if (landName && orderType) {
       const today = moment().format('YYYY-MM-DD');

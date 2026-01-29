@@ -1,4 +1,4 @@
-import { Card, Tree, Empty, message } from 'antd';
+import { Card, Tree, Empty } from 'antd';
 import React, { useEffect, useState } from 'react';
 import type { TreeProps } from 'antd';
 import { tree } from '@/pages/Base/service';
@@ -9,12 +9,14 @@ const TreeCard: React.FC<any> = ({ mapRef, onSelected }) => {
   const location = useLocation();
 
   useEffect(() => {
-    tree().then(res => setData(res.data));
+    tree().then(res => {
+      setData(res.data)
+    });
   }, []);
 
   const loop = () =>
     data.map((item: any) => (
-      <Tree.TreeNode title={item.areaName} key={`areaId-${item.areaId}`} data={item.lands}>
+      <Tree.TreeNode title={item.areaName} key={`areaId-${item.areaId}`} data={item.lands.map(record => ({ ...record, isSlopeTooLarge:  Math.abs(record.k) > Number(item.slope) }))}>
         {item.lands?.map((i: any) => (
           <Tree.TreeNode title={i.landName} key={`landId-${i.landId}`} data={item.lands} />
         ))}
@@ -25,7 +27,8 @@ const TreeCard: React.FC<any> = ({ mapRef, onSelected }) => {
     const { data } = node;
 
     if (location.pathname.indexOf('/base/area') !== -1) {
-      mapRef.current?.home(data, node.key.startsWith('land') ? node.title : undefined);
+      // mapRef.current?.home(data, node.key.startsWith('land') ? node.title : undefined);
+      mapRef.current?.initLand(data);
     } else if (location.pathname.indexOf('/base/land') !== -1) {
       onSelected(node);
     }

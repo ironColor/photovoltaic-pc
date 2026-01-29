@@ -6,9 +6,10 @@ interface DisplayProps {
   count: number;
   status: number;
   voltage: number;
+  voltage133: number;
 }
 
-const Index: React.FC<DisplayProps> = ({ count, status, voltage }) => {
+const Index: React.FC<DisplayProps> = ({ count, status, voltage, voltage133 }) => {
   const [params, setParams] = React.useState<string>();
 
   useEffect(() => {
@@ -41,6 +42,9 @@ const Index: React.FC<DisplayProps> = ({ count, status, voltage }) => {
         </div>
         <div style={voltage && voltage < 89 ? { color: '#ff5858' } : undefined}>
           当前电压：{voltage ? voltage + 'V' : '暂无数据'}
+        </div>
+        <div>
+          锁闩电压: {voltage133 ? voltage133 : '暂无数据'}
         </div>
       </div>
     );

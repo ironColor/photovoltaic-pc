@@ -32,7 +32,6 @@ import p4 from '/public/picture/04.png';
 import p5 from '/public/picture/05.png';
 import p6 from '/public/picture/06.png';
 import p7 from '/public/picture/07.png';
-import p8 from '/public/picture/08.png';
 import Block from '@/pages/Task/Monitor/components/Block';
 import Display from '@/pages/Task/Monitor/components/Display';
 import { useEmotionCss } from '@ant-design/use-emotion-css';
@@ -42,7 +41,6 @@ export default function ExecuteWork() {
   const [complete, setComplete] = useState(false);
   const [dataArr, setDataArr] = useState<any[]>([]);
   const [colKey, setColKey] = useState<any[]>([]);
-  const [select, setSelect] = useState<string>();
   const [subTaskId, setSubTaskId] = useState<string>();
   const [searchParams] = useSearchParams();
   const [orderLogId, setOrderLogId] = useState();
@@ -60,6 +58,8 @@ export default function ExecuteWork() {
   }));
   // 机器人电压
   const [robotVoltages, setRobotVoltages] = useState<{ [key: string]: number[] }>({});
+  // ws 133的锁闩电压
+  const [voltage, setVlotage] = useState<number>(null);
 
   const call = useCallback(() => {
     const orderId = searchParams.get('id');
@@ -190,6 +190,7 @@ export default function ExecuteWork() {
       } else if (data.commandCode === 23) {
         message.success('下一喷洒任务已启动');
       } else if (data.commandCode === 132) {
+        setVlotage(data.voltage);
         //刷新页面
         call()
       }
@@ -310,15 +311,12 @@ export default function ExecuteWork() {
                         onChange={() => {
                           setText(`执行任务${task.taskName}，机器人${item.robotCode}${taskType[task.taskType]}至${item.landName}`);
                           setSubTaskId(task.subtaskId);
-                          setSelect(`${task.taskName}-${index}`);
                           setTask(task.taskType)
                         }}
                       >
                         {task.taskName}
-                        {task.error && (
-                          <Tooltip title="错误码说明">
-                            <span style={{ marginLeft: 8 }}>{task.error}</span>
-                          </Tooltip>
+                        {task.errorCode && (
+                          <span style={{ marginLeft: 8, color: 'red' }}>{task.errorCode}</span>
                         )}
                       </Radio>
                     }
@@ -484,7 +482,7 @@ export default function ExecuteWork() {
       title='执行工单'
       extra={
         <Space>
-          <Display count={info.rtkCount} status={info.rtkStatus} voltage={info.voltage} />
+          <Display count={info.rtkCount} status={info.rtkStatus} voltage={info.voltage} voltage133={voltage} />
           <Button
             type={'primary'}
             style={{ backgroundColor: '#13c2c2' }}

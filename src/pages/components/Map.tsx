@@ -484,6 +484,8 @@ const Map: React.ForwardRefRenderFunction<
     return () => {
       map.current?.clearMap();
       map.current?.destroy();
+      map.current = null;
+      AMap.current = null;
     };
   }, []);
 
