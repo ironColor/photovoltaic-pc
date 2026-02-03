@@ -1,7 +1,7 @@
 export const landType: Record<number, string> = {
-  1: '光伏类型',
-  2: '洒水类型',
-  3: '割草类型'
+  1: '光伏干洗',
+  2: '光伏湿洗',
+  3: '光伏除草'
 };
 
 export const taskType: Record<number, string> = {

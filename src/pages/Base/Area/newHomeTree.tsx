@@ -1,34 +1,51 @@
 import { Card, Tree, Empty } from 'antd';
 import React, { useEffect, useState } from 'react';
 import type { TreeProps } from 'antd';
-import { tree } from '@/pages/Base/service';
+import { newTree } from '@/pages/Base/service';
 import { useLocation } from '@@/exports';
 
-const TreeCard: React.FC<any> = ({ mapRef, onSelected }) => {
+const TreeCard: React.FC<any> = ({ mapRef, onSelected, showSpecial }) => {
   const [data, setData] = useState<[]>([]);
   const location = useLocation();
 
   useEffect(() => {
-    tree().then(res => {
+    newTree().then(res => {
       setData(res.data)
     });
   }, []);
 
   const loop = () =>
     data.map((item: any) => (
-      <Tree.TreeNode title={item.areaName} key={`areaId-${item.areaId}`} data={item.lands.map(record => ({ ...record, isSlopeTooLarge:  Math.abs(record.k) > Number(item.slope) }))}>
+      <Tree.TreeNode
+        title={item.areaName}
+        key={`areaId-${item.areaId}`}
+        data={item.lands.map(record => ({ ...record, isSlopeTooLarge:  Math.abs(record.k) > Number(item.slope) }))}
+        __pointData={item.points}
+      >
         {item.lands?.map((i: any) => (
-          <Tree.TreeNode title={i.landName} key={`landId-${i.landId}`} data={item.lands} />
+          <Tree.TreeNode title={<div>
+            {i.landName}
+            {
+              showSpecial && <div>
+                <div>
+                  {i.arrayId}
+                </div>
+                <div>
+                  {i.strId}
+                </div>
+              </div>
+            }
+          </div>} key={`landId-${i.landId}`} data={item.lands} />
         ))}
       </Tree.TreeNode>
     ));
 
   const onSelect: TreeProps['onSelect'] = async (_, { node }: any) => {
-    const { data, __data2 } = node;
-    console.log(__data2);
+    const { data, __pointData } = node;
+
     if (location.pathname.indexOf('/base/area') !== -1) {
       // mapRef.current?.home(data, node.key.startsWith('land') ? node.title : undefined);
-      mapRef.current?.initLand(data);
+      mapRef.current?.initLand(data, __pointData);
     } else if (location.pathname.indexOf('/base/land') !== -1) {
       onSelected(node);
     }

@@ -55,17 +55,19 @@ export default function AddWorkOrder( ) {
   const [selectedRecordsMap, setSelectedRecordsMap] = useState<Record<string, Land.Item>>({});
   const [page, setPage] = useState(1);
   const [all, setAll] = useState<any[]>([]);
+  // 用于储存当前选中的
+  const [select, setSelect] = useState<any[]>([])
 
   const handleColumns = useCallback((simple: boolean) => {
     if (simple) {
       return [
+        // {
+        //   title: '排序',
+        //   dataIndex: 'sort',
+        //   width: 60
+        // },
         {
-          title: '排序',
-          dataIndex: 'sort',
-          width: 60
-        },
-        {
-          title: '地块名称',
+          title: '组串名称',
           dataIndex: 'landName',
           width: 200,
           ellipsis: true
@@ -103,17 +105,40 @@ export default function AddWorkOrder( ) {
     }
     return  [
       {
-        title: '地块名称',
+        title: '组串名称',
         dataIndex: 'landName',
+        search: false,
         width: 200,
         ellipsis: true
       },
       {
         title: '类型',
         dataIndex: 'landType',
+        search: false,
         width: 90,
         renderText: (text: number) => <Tag color={'processing'}>{landType[+text]}</Tag>,
         valueEnum: landType
+      },
+      {
+        title: '地块', // 搜索区域会显示这个标题
+        dataIndex: 'plotId', // 请求参数的 key
+        key: 'plotId',
+        search: true,  // 启用搜索
+        table: false,  // 不在表格中显示
+      },
+      {
+        title: '矩阵', // 搜索区域会显示这个标题
+        dataIndex: 'arrayId', // 请求参数的 key
+        key: 'arrayId',
+        search: true,  // 启用搜索
+        table: false,  // 不在表格中显示
+      },
+      {
+        title: '组串',
+        dataIndex: 'strId',
+        key: 'strId',
+        search: true,
+        table: false,
       },
       {
         title: '边界点A',
@@ -355,7 +380,11 @@ export default function AddWorkOrder( ) {
         setLandData(detailData.landList);
         getAllLand(detailData.areaId)
         // // 同步选中
-        // setSelectedRowKeys(detailData.landList.map(item => item.landId))
+        const newMap = {};
+        detailData.landList?.forEach(row => {
+          newMap[row.landId] = row;
+        });
+        setSelectedRecordsMap(newMap);
 
       } catch (err) {
         console.error('数据加载异常:', err);
@@ -387,7 +416,7 @@ export default function AddWorkOrder( ) {
     // 斜率只能通过接口获取
     if (landData.length > 0 && all.length > 0 && k) {
       requestAnimationFrame(() => {
-        mapRef.current?.highlightLandsByIds(landData.map(item => item.landId.toString()));
+        mapRef.current?.highlightLandsByIds(landData.map(item => item.landId?.toString()));
       })
     }
     form.setFieldsValue({
@@ -497,12 +526,16 @@ export default function AddWorkOrder( ) {
 
   // 自动化工单名称
   useEffect(() => {
-    if (landName && orderType) {
+    if (landName && orderType && landData.length > 0) {
       const today = moment().format('YYYY-MM-DD');
-      form.setFieldsValue({ orderName: `${today}-${landName}-${orderType === 1 ? '干洗' : '水洗'}` });
+      form.setFieldsValue({ orderName: `${today}-${landName}-${orderType === 1 ? '干洗' : '水洗'}-${landData[0].landName}` });
     }
 
-  }, [landName, orderType]);
+  }, [landName, orderType, landData]);
+
+  useEffect(() => {
+    setSelect(landData)
+  }, [open])
 
   return (
     <Row gutter={32} style={{ background: '#fff'}}>
@@ -548,13 +581,13 @@ export default function AddWorkOrder( ) {
             </Form.Item>
 
             <Form.Item
-              label="地块"
+              label="组串"
               name="landIds"
               rules={[
                 {
                   validator: (_, value) => {
                     if (!value || value.length === 0) {
-                      return Promise.reject(new Error('请至少添加一个地块'));
+                      return Promise.reject(new Error('请至少添加一个组串'));
                     }
                     return Promise.resolve();
                   },
@@ -578,9 +611,15 @@ export default function AddWorkOrder( ) {
                 style={{ width: '90%', marginTop: '12px' }}
                 type='dashed'
                 icon={<PlusOutlined />}
-                onClick={() => setOpen(true)}
+                onClick={() => {
+                  // if (!landId) {
+                  //   message.error('请先选择场地');
+                  //   return;
+                  // }
+                  setOpen(true)
+                }}
               >
-                添加地块
+                添加组串
               </Button>
             </Form.Item>
             <Form.Item label="机组"  rules={[{ required: true, message: '请选择机组' }]} name="uavConfigId">
@@ -650,16 +689,18 @@ export default function AddWorkOrder( ) {
           </Form>
 
           <Modal
-            title={'选择地块'}
+            title={'选择组串'}
             open={open}
-            onCancel={() => setOpen(false)}
+            onCancel={() => {
+              setOpen(false);
+            }}
             footer={null}
             width={'90%'}
             destroyOnHidden
           >
             <ProTable<Land.Item>
               columns={handleColumns(false)}
-              headerTitle={<b>地块列表</b>}
+              headerTitle={<b>组串列表</b>}
               params={{}}
               cardBordered={true}
               rowClassName={(record) =>
@@ -677,9 +718,6 @@ export default function AddWorkOrder( ) {
                 return { data: records, success: !code, total: total };
               }}
               rowKey='landId'
-              search={{
-                labelWidth: 'auto'
-              }}
               pagination={{
                 showSizeChanger: false,
                 showQuickJumper: true,
@@ -687,7 +725,7 @@ export default function AddWorkOrder( ) {
               }}
               dateFormatter='string'
               rowSelection={{
-                selectedRowKeys: landData.map(item => item.landId),
+                selectedRowKeys: select.map(item => item.landId),
                 onChange: (keys, rows) => {
                   const newMap = { ...selectedRecordsMap };
 
@@ -709,7 +747,8 @@ export default function AddWorkOrder( ) {
                         }
                       }
                     }).filter(item => item !== undefined);
-                  setLandData(newData);
+                  setSelect(newData);
+                  // setLandData(newData);
                 },
                 selections: [Table.SELECTION_INVERT], // 移除全选，避免误导
                 getCheckboxProps: (record) => ({
@@ -721,8 +760,16 @@ export default function AddWorkOrder( ) {
                   <Space size={24}>
                 <span>
                   已选 {selectedRowKeys.length} 项
+
                   <a style={{ marginInlineStart: 8 }} onClick={() => {
-                    setLandData([])
+                    setLandData(select);
+                    setOpen(false);
+                  }}>
+                    确认
+                  </a>
+                  <a style={{ marginInlineStart: 8 }} onClick={() => {
+                    // setLandData([])
+                    setSelect([])
                     onCleanSelected()
                   }}>
                     取消选择
@@ -731,6 +778,7 @@ export default function AddWorkOrder( ) {
                   </Space>
                 );
               }}
+              tableAlertOptionRender={false}
             />
           </Modal>
         </div>

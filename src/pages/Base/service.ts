@@ -24,3 +24,10 @@ export const detail = async (params: number) => {
     method: 'GET'
   });
 };
+
+
+export const newTree = async () => {
+  return request<API.R<[]>>('/basicInfo/area', {
+    method: 'GET'
+  });
+};

@@ -2,6 +2,7 @@ import { Col, Row } from 'antd';
 import React from 'react';
 import RegionTable from './LandTable';
 import HomeTree from '@/pages/Base/Area/HomeTree';
+import NewHomeTree from '@/pages/Base/Area/newHomeTree';
 
 const Region: React.FC = () => {
   let childRef = React.createRef<any>();
@@ -13,7 +14,7 @@ const Region: React.FC = () => {
   return (
     <Row gutter={16}>
       <Col flex='350px'>
-        <HomeTree onSelected={onSelect} />
+        <NewHomeTree onSelected={onSelect} showSpecial={true} />
       </Col>
       <Col flex='auto'>
         <RegionTable ref={childRef} />

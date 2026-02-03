@@ -1,4 +1,4 @@
-import React, { useEffect, useImperativeHandle, useRef } from 'react';
+import React, { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import AMapLoader from '@amap/amap-jsapi-loader';
 import '@amap/amap-jsapi-types';
 import gcoord from 'gcoord';
@@ -12,6 +12,16 @@ type MapProps = {
   complete?: () => void;
   onLandClick?: (land: any) => void;
 }
+
+const POINT_TYPE_TAKEOFF = 10; // 起飞点
+const POINT_TYPE_MOUNT = 7;    // 挂载点
+const POINT_TYPE_UNLOAD = 8;   // 卸载点
+
+const legendItems = [
+  { color: 'grey', label: '未清洗' },
+  { color: 'green', label: '已清洗' },
+  { color: 'red', label: '坡度过大' }, // 如果有其他颜色也需要在这里定义
+];
 
 function isWithinLastMonth(timeStr) {
   if (!timeStr) return false;
@@ -39,54 +49,116 @@ const Map: React.ForwardRefRenderFunction<
   const AMap = useRef<any>(null);
   const map = useRef<any>(null);
   const polygonMap = useRef<Record<string, any>>({}); // 缓存所有 polygon 实例，用于高亮控制
+  const [isSatelliteView, setIsSatelliteView] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
+
+  const layersRef = useRef<{
+    vector?: any;
+    satellite?: any;
+    roadNet?: any;
+  }>({});
 
 
-  const highlightLand = (landId: string | number) => {
-    // 重置所有地块为默认样式
-    Object.values(polygonMap.current).forEach((poly: any) => {
-      poly.setOptions({
-        fillColor: '#ffcccc',
-        fillOpacity: 0.4,
-        strokeWeight: 1,
+  const init = async () => {
+    try {
+      const aMap = await AMapLoader.load({
+        key: 'e486dd7ef2fbc6329ec2c04f1287787e',
+        version: '2.0'
       });
-    });
 
-    // 高亮目标地块
-    const targetPoly = polygonMap.current[landId];
-    if (targetPoly) {
-      targetPoly.setOptions({
-        fillColor: 'yellow',
-        fillOpacity: 0.6,
-        strokeWeight: 2,
+      AMap.current = aMap;
+
+      layersRef.current.vector = new aMap.TileLayer({
+        zIndex: 1
       });
+
+      layersRef.current.satellite = new aMap.TileLayer.Satellite({
+        zIndex: 1
+      });
+
+      layersRef.current.roadNet = new aMap.TileLayer.RoadNet({
+        zIndex: 2
+      });
+
+      map.current = new aMap.Map('container', {
+        viewMode: '3D',
+        zoom: 14,
+        center: [116.397428, 39.90923],
+        layers: [layersRef.current.vector]
+      });
+
+      map.current.on('complete', () => {
+        console.log('地图资源加载完成～');
+        props.complete?.(true);
+      });
+    } catch (err) {
+      console.error('MAP ERROR~~～', err);
     }
   };
 
-  const init = async () => {
-    AMapLoader.load({
-      key: 'e486dd7ef2fbc6329ec2c04f1287787e',
-      version: '2.0'
-    })
-      .then(aMap => {
-        AMap.current = aMap;
-        map.current = new aMap.Map('container', {
-          viewMode: '3D',
-          zoom: 14,
-          center: [116.397428, 39.90923]
-        });
-        map.current.on('complete', () => {
-          console.log('地图资源加载完成~');
-          props.complete && props.complete(true);
-        });
-      })
-      .catch(err => {
-        console.error('MAP ERROR~~~', err);
-      });
+
+  // const init = async () => {
+  //   const aMap = AMapLoader.load({
+  //     key: 'e486dd7ef2fbc6329ec2c04f1287787e',
+  //     version: '2.0'
+  //   })
+  //
+  //   AMap.current = aMap
+  //
+  //
+  //   AMapLoader.load({
+  //     key: 'e486dd7ef2fbc6329ec2c04f1287787e',
+  //     version: '2.0'
+  //   })
+  //     .then(aMap => {
+  //       AMap.current = aMap;
+  //       map.current = new aMap.Map('container', {
+  //         viewMode: '3D',
+  //         zoom: 14,
+  //         center: [116.397428, 39.90923]
+  //       });
+  //
+  //       // 初始化时根据状态设置图层
+  //       updateMapLayers(isSatelliteView);
+  //
+  //       map.current.on('complete', () => {
+  //         console.log('地图资源加载完成～');
+  //         props.complete && props.complete(true);
+  //       });
+  //     })
+  //     .catch(err => {
+  //       console.error('MAP ERROR~~～', err);
+  //     });
+  //
+  // };
+
+  const updateMapLayers = (isSatellite: boolean) => {
+    if (!map.current) return;
+
+    if (isSatellite) {
+      map.current.setLayers([
+        layersRef.current.satellite,
+        // layersRef.current.roadNet
+      ]);
+    } else {
+      map.current.setLayers([
+        layersRef.current.vector
+      ]);
+    }
   };
 
-  const initLand = (regionArr: any) => {
+  const toggleMapView = () => {
+    setIsSatelliteView(prev => {
+      const next = !prev;
+      updateMapLayers(next);
+      return next;
+    });
+  };
+
+  const initLand = (regionArr: any, pointArray: any) => {
     if (map.current) {
       map.current.clearMap();
+      polygonMap.current = {};
       polygonMap.current = {};
 
       if (!regionArr?.length) return;
@@ -133,15 +205,6 @@ const Map: React.ForwardRefRenderFunction<
           clickable: true,
         });
 
-        // polygon.on('click', () => {
-        //   // 1. 高亮当前地块（可扩展为“单选”或“多选”）
-        //   highlightLand(item.landId)
-        //
-        //   // 2. 通知父组件
-        //   props.onLandClick?.(item);
-        // });
-
-
         map.current.add(polygon);
         polygonMap.current[item.landId] = polygon;
 
@@ -163,16 +226,69 @@ const Map: React.ForwardRefRenderFunction<
           clickable: true
         });
 
-        // text.on('click', () => {
-        //   // 1. 高亮当前地块（可扩展为“单选”或“多选”）
-        //   highlightLand(item.landId)
-        //
-        //   // 2. 通知父组件
-        //   props.onLandClick?.(item);
-        // })
-
         map.current.add(text);
       });
+
+      if (pointArray && Array.isArray(pointArray)) {
+        for (const point of pointArray) {
+          // 检查是否为需要渲染的点类型
+          if (![POINT_TYPE_TAKEOFF, POINT_TYPE_MOUNT, POINT_TYPE_UNLOAD].includes(point.pointType)) {
+            continue; // 跳过不需要渲染的点
+          }
+
+          // 坐标转换
+          const transformedCoords = gcoord.transform([point.lon, point.lat], gcoord.WGS84, gcoord.GCJ02);
+          const lngLat = new AMap.current.LngLat(transformedCoords[0], transformedCoords[1]);
+
+          switch (point.pointType) {
+            case POINT_TYPE_TAKEOFF: {
+              // 创建起飞点：带虚线的椭圆
+              const ellipse = new AMap.current.Ellipse({
+                center: lngLat,
+                radius: [2, 1],
+                strokeColor: "#3366FF",
+                strokeWeight: 2,
+                strokeStyle: "dashed",
+                strokeOpacity: 1,
+                fillColor: "",
+                fillOpacity: 0,
+                zIndex: 100,
+              });
+              map.current.add(ellipse);
+              break;
+            }
+            case POINT_TYPE_MOUNT: {
+              // 创建挂载点：实心圆
+              const solidCircle = new AMap.current.Circle({
+                center: lngLat,
+                radius: 1,
+                strokeColor: "#FF3333",
+                strokeWeight: 2,
+                fillColor: "#FF3333",
+                fillOpacity: 0.6,
+                zIndex: 100,
+              });
+              map.current.add(solidCircle);
+              break;
+            }
+            case POINT_TYPE_UNLOAD: {
+              // 创建卸载点：空心圆
+              const hollowCircle = new AMap.current.Circle({
+                center: lngLat,
+                radius: 1,
+                strokeColor: "#333333",
+                strokeWeight: 2,
+                fillColor: "",
+                fillOpacity: 0,
+                zIndex: 100,
+              });
+              map.current.add(hollowCircle);
+              break;
+            }
+          }
+        }
+      }
+
 
       if (validCount > 0) {
         const avgCenterWGS84: [number, number] = [
@@ -187,6 +303,7 @@ const Map: React.ForwardRefRenderFunction<
         const targetZoom = 19; // 👈 可按需调整
         map.current.setZoomAndCenter(targetZoom, new AMap.current.LngLat(gcjLng, gcjLat));
       }
+      setShowLegend(true)
     }
   };
 
@@ -493,25 +610,47 @@ const Map: React.ForwardRefRenderFunction<
     execute: (position: [], air?: [number, number]) => execute(position, air),
     log: (lineArr: Array<[number, number]>) => log(lineArr),
     home: (regionArr: any, regionId: number) => home(regionArr, regionId),
-    initLand: (regionArr: any, regionId: number) => initLand(regionArr, regionId),
+    initLand: (regionArr: any, pointArray: any) => initLand(regionArr, pointArray),
     highlightLandsByIds: (landIds: any) => highlightLandsByIds(landIds),
     resetLand: id => resetLand(id)
   }));
 
   return (
-    <div
-      id='container'
-      style={{
-        height: 'calc(100vh - 88px)',
-        minHeight: '500px',
-        padding: 0,
-        margin: 0,
-        width: '100%',
-        borderRadius: '4px',
-        boxShadow: '0 2px 10px 0 rgba(14,33,39,.2)',
-        ...props.styles
-      }}
-    />
+    <div>
+      <div style={{ position: 'absolute', bottom: '10px', left: '10px', zIndex: 1000, backgroundColor: 'white', padding: '10px', borderRadius: '5px', display: showLegend ? 'unset': 'none' }}>
+        <h4>图例</h4>
+        <ul style={{ listStyleType: 'none', padding: 0 }}>
+          {legendItems.map((item, index) => (
+            <li key={index} style={{ marginBottom: '5px', display: 'flex', alignItems: 'center' }}>
+            <span style={{
+              width: '10px',
+              height: '10px',
+              backgroundColor: item.color,
+              marginRight: '5px',
+              display: 'inline-block'
+            }}></span>
+              <span>{item.label}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div
+        id='container'
+        style={{
+          height: 'calc(100vh - 88px)',
+          minHeight: '500px',
+          padding: 0,
+          margin: 0,
+          width: '100%',
+          borderRadius: '4px',
+          boxShadow: '0 2px 10px 0 rgba(14,33,39,.2)',
+          ...props.styles
+        }}
+      />
+      <button onClick={toggleMapView} style={{ position: 'absolute', top: '10px', left: '10px' }}>
+        切换到 {isSatelliteView ? '矢量图' : '卫星图'}
+      </button>
+    </div>
   );
 };
 

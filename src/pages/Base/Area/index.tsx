@@ -2,6 +2,7 @@ import { Col, Row } from 'antd';
 import React from 'react';
 import Map from '@/pages/components/Map';
 import HomeTree from '@/pages/Base/Area/HomeTree';
+import NewHomeTree from "@/pages/Base/Area/newHomeTree";
 
 const Home: React.FC = () => {
   let childRef = React.createRef<any>();
@@ -9,7 +10,7 @@ const Home: React.FC = () => {
   return (
     <Row gutter={16}>
       <Col flex='350px'>
-        <HomeTree mapRef={childRef} />
+        <NewHomeTree mapRef={childRef} />
       </Col>
       <Col flex='auto'>
         <Map ref={childRef} />
