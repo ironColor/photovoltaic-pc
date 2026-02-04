@@ -47,6 +47,7 @@ const WorkOrder: React.FC = () => {
       title: '执行状态',
       dataIndex: 'execStatus',
       ellipsis: true,
+      width: 100,
       search: false,
       render: (text, record: any) => <Badge status={record.execStatus === '执行中' ? 'success' : 'default'} text={text} />
     },
@@ -54,18 +55,21 @@ const WorkOrder: React.FC = () => {
       title: '起飞点',
       dataIndex: 'takeoffPointName',
       ellipsis: true,
+      width: 100,
       search: false
     },
     {
       title: "挂载点",
       dataIndex: 'mountPointName',
       ellipsis: true,
+      width: 100,
       search: false
     },
     {
       title: '卸载点',
       dataIndex: 'uploadPointName',
       ellipsis: true,
+      width: 100,
       search: false
     },
     {

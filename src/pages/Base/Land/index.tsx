@@ -8,6 +8,7 @@ const Region: React.FC = () => {
   let childRef = React.createRef<any>();
   const onSelect = (node: any) => {
     const [type, id] = node.key.split('-');
+    console.log(type, id);
     childRef.current?.setArgs({ [type]: id });
   };
 

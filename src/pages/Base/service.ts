@@ -31,3 +31,9 @@ export const newTree = async () => {
     method: 'GET'
   });
 };
+
+export const specialTree = async () => {
+  return request<API.R<[]>>('/basicInfo/land', {
+    method: 'GET'
+  });
+};
