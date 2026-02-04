@@ -45,7 +45,7 @@ const TreeCard: React.FC<any> = ({ mapRef, onSelected, showSpecial }) => {
           {
             i.arrayInfoList?.map(aa => (
               <Tree.TreeNode title={aa.arrayId} key={`arrayId-${aa.arrayId}-${i.plotId}`} switcherIcon={null}>
-                  {aa.strIdList?.map(st => <Tree.TreeNode title={st} key={`strIdList-${i.plotId}-${aa.arrayId}--${st}`} switcherIcon={null} />)}
+                  {aa.strIdList?.map(st => <Tree.TreeNode title={st} key={`strId-${st}-${i.plotId}-${aa.arrayId}`} switcherIcon={null} />)}
               </Tree.TreeNode>
             ))
           }
@@ -83,7 +83,7 @@ const TreeCard: React.FC<any> = ({ mapRef, onSelected, showSpecial }) => {
       }}
     >
       {data?.length > 0 ? (
-        <Tree showLine defaultExpandAll onSelect={onSelect}>
+        <Tree showLine onSelect={onSelect}>
           { showSpecial ?  specialLoop() : loop()}
         </Tree>
       ) : (
