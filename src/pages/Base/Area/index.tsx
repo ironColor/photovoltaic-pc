@@ -1,7 +1,6 @@
 import { Col, Row } from 'antd';
 import React from 'react';
 import Map from '@/pages/components/Map';
-import HomeTree from '@/pages/Base/Area/HomeTree';
 import NewHomeTree from "@/pages/Base/Area/newHomeTree";
 
 const Home: React.FC = () => {
