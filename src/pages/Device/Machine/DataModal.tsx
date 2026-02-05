@@ -54,6 +54,7 @@ export default ({
           name='robotCode'
           tooltip='机器人编号'
           width='md'
+          placeholder='请输入1-255数字'
           rules={[{ required: true, message: '请输入机器人编号' }]}
           initialValue={data.robotCode}
           fieldProps={{ maxLength: 16 }}

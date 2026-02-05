@@ -32,7 +32,6 @@ const TreeCard: React.FC<any> = ({ mapRef, onSelected, showSpecial }) => {
       </Tree.TreeNode>
     ));
 
-    console.log(11111, data)
   const specialLoop = () => data.map((item: any) => (
     <Tree.TreeNode
       title={item.areaName}
@@ -41,11 +40,11 @@ const TreeCard: React.FC<any> = ({ mapRef, onSelected, showSpecial }) => {
       switcherIcon={null}
     >
       {item.plotInfoList?.map((i: any) => (
-        <Tree.TreeNode title={i.plotId} key={`plotId-${i.plotId}`} switcherIcon={null}>
+        <Tree.TreeNode title={i.plotId} key={`plotId-${i.plotId}-${item.areaId}`} switcherIcon={null}>
           {
             i.arrayInfoList?.map(aa => (
-              <Tree.TreeNode title={aa.arrayId} key={`arrayId-${aa.arrayId}-${i.plotId}`} switcherIcon={null}>
-                  {aa.strIdList?.map(st => <Tree.TreeNode title={st} key={`strId-${st}-${i.plotId}-${aa.arrayId}`} switcherIcon={null} />)}
+              <Tree.TreeNode title={aa.arrayId} key={`arrayId-${aa.arrayId}-${i.plotId}-${item.areaId}`} switcherIcon={null}>
+                  {aa.strIdList?.map(st => <Tree.TreeNode title={st} key={`strId-${st}-${aa.arrayId}-${i.plotId}-${item.areaId}`} switcherIcon={null} />)}
               </Tree.TreeNode>
             ))
           }
