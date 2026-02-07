@@ -43,6 +43,7 @@ const Map: React.ForwardRefRenderFunction<
     execute?: (position: [], air?: [number, number]) => void;
     log?: (lineArr: Array<[number, number]>) => void;
     home?: (regionArr: any, regionId: number) => void;
+    initRobot?: (info: any) =>  void;
   },
   MapProps
 > = (props, ref) => {
@@ -51,6 +52,8 @@ const Map: React.ForwardRefRenderFunction<
   const polygonMap = useRef<Record<string, any>>({}); // 缓存所有 polygon 实例，用于高亮控制
   const [isSatelliteView, setIsSatelliteView] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
+
+  const robotMarkersRef = useRef<Record<string, AMap.Marker>>({});
 
   const layersRef = useRef<{
     vector?: any;
@@ -95,42 +98,6 @@ const Map: React.ForwardRefRenderFunction<
       console.error('MAP ERROR~~～', err);
     }
   };
-
-
-  // const init = async () => {
-  //   const aMap = AMapLoader.load({
-  //     key: 'e486dd7ef2fbc6329ec2c04f1287787e',
-  //     version: '2.0'
-  //   })
-  //
-  //   AMap.current = aMap
-  //
-  //
-  //   AMapLoader.load({
-  //     key: 'e486dd7ef2fbc6329ec2c04f1287787e',
-  //     version: '2.0'
-  //   })
-  //     .then(aMap => {
-  //       AMap.current = aMap;
-  //       map.current = new aMap.Map('container', {
-  //         viewMode: '3D',
-  //         zoom: 14,
-  //         center: [116.397428, 39.90923]
-  //       });
-  //
-  //       // 初始化时根据状态设置图层
-  //       updateMapLayers(isSatelliteView);
-  //
-  //       map.current.on('complete', () => {
-  //         console.log('地图资源加载完成～');
-  //         props.complete && props.complete(true);
-  //       });
-  //     })
-  //     .catch(err => {
-  //       console.error('MAP ERROR~~～', err);
-  //     });
-  //
-  // };
 
   const updateMapLayers = (isSatellite: boolean) => {
     if (!map.current) return;
@@ -306,6 +273,44 @@ const Map: React.ForwardRefRenderFunction<
       setShowLegend(true)
     }
   };
+
+  const initRobot = (pointInfo: any) => {
+    console.log(1122233, pointInfo)
+    if (map.current) {
+      const { robotCode, lon, lat } = pointInfo;
+
+
+      // 1. 坐标转换：WGS84 → GCJ02（高德）
+      const [lng, latGCJ] = gcoord.transform(
+        [lon, lat],
+        gcoord.WGS84,
+        gcoord.GCJ02
+      );
+
+      // 2. 创建/更新 Marker
+      let marker = robotMarkersRef.current[robotCode];
+
+      const position = new AMap.current.LngLat(lng, latGCJ);
+
+      if (marker) {
+        // 更新已有 marker 位置
+        marker.setPosition(position);
+      } else {
+        // 创建新 marker
+        marker = new AMap.current.Marker({
+          position,
+          title: `机器人 ${robotCode}`,
+          // 可自定义图标，例如：
+          icon: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
+          // 或使用默认图标
+          zIndex: 1000,
+        });
+      }
+      map.current.add(marker);
+      robotMarkersRef.current[robotCode] = marker;
+      map.current.setFitView(null, false, [150, 60, 100, 60], 21);
+    }
+  }
 
   const highlightLandsByIds = (landIds: any) => {
     if (!map.current) return;
@@ -612,7 +617,8 @@ const Map: React.ForwardRefRenderFunction<
     home: (regionArr: any, regionId: number) => home(regionArr, regionId),
     initLand: (regionArr: any, pointArray: any) => initLand(regionArr, pointArray),
     highlightLandsByIds: (landIds: any) => highlightLandsByIds(landIds),
-    resetLand: id => resetLand(id)
+    resetLand: id => resetLand(id),
+    initRobot: info => initRobot(info)
   }));
 
   return (

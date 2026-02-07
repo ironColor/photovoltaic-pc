@@ -761,19 +761,19 @@ export default function AddWorkOrder( ) {
                 <span>
                   已选 {selectedRowKeys.length} 项
 
-                  <a style={{ marginInlineStart: 8 }} onClick={() => {
+                  <Button type="primary" style={{ marginInlineStart: 8 }} onClick={() => {
                     setLandData(select);
                     setOpen(false);
                   }}>
                     确认
-                  </a>
-                  <a style={{ marginInlineStart: 8 }} onClick={() => {
+                  </Button>
+                  <Button style={{ marginInlineStart: 8 }} onClick={() => {
                     // setLandData([])
                     setSelect([])
                     onCleanSelected()
                   }}>
                     取消选择
-                  </a>
+                  </Button>
                 </span>
                   </Space>
                 );

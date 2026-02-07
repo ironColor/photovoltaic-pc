@@ -56,10 +56,10 @@ const TreeCard: React.FC<any> = ({ mapRef, onSelected, showSpecial }) => {
 
   const onSelect: TreeProps['onSelect'] = async (_, { node }: any) => {
     const { data, __pointData } = node;
-
+      console.log(11111, __pointData, showSpecial)
     if (location.pathname.indexOf('/base/area') !== -1) {
       // mapRef.current?.home(data, node.key.startsWith('land') ? node.title : undefined);
-        if (showSpecial) {
+        if (!showSpecial) {
             mapRef.current?.initLand(data, __pointData);
         } else {
             mapRef.current?.initLand(data);

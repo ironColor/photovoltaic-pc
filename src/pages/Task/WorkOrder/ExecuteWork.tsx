@@ -193,6 +193,8 @@ export default function ExecuteWork() {
         setVlotage(data.voltage);
         //刷新页面
         call()
+      } else if (data.commandCode === 135) {
+        mapRef.current?.initRobot(data)
       }
     },
     onError: event => {
@@ -362,8 +364,9 @@ export default function ExecuteWork() {
         ),
       };
     });
-  }, [dataArr, subTaskId, colKey, robotVoltages]); // 这些是真正影响渲染的依赖
+  }, [dataArr, subTaskId, colKey, robotVoltages]);
 
+  console.log(111111111, robotVoltages);
 // 然后直接使用
   useEffect(() => {
     setTimeline(timelineItems);
@@ -442,6 +445,16 @@ export default function ExecuteWork() {
   }, [complete]);
 
   const onStart = async () => {
+    mapRef.current.initRobot(
+      {
+        "robotCode":"2",
+        "commandCode": 135,
+        "lon": 32.64222,//经度
+        "lat": 32.642222,//纬度
+        "alt": 32.642222 //高度
+      }
+    )
+
     if (subTaskId) {
       if (task === 2 || task === 4) {
         speak(text)
