@@ -8,7 +8,8 @@ import {
   Modal,
   Radio,
   Row,
-  Space, Statistic,
+  Space,
+  Statistic,
   Timeline,
   Tooltip
 } from 'antd';
@@ -190,9 +191,12 @@ export default function ExecuteWork() {
       } else if (data.commandCode === 23) {
         message.success('下一喷洒任务已启动');
       } else if (data.commandCode === 132) {
-        setVlotage(data.voltage);
+        // setVlotage(data.voltage);
         //刷新页面
         call()
+      } else if (data.commandCode === 133) {
+        const value = +data.voltage - 9 > 0 ? +data.voltage - 9 : 0
+        setVlotage(`${Math.floor(value / 3.8 * 100)} %`);
       } else if (data.commandCode === 135) {
         mapRef.current?.initRobot(data)
       }
@@ -212,7 +216,7 @@ export default function ExecuteWork() {
     // 刷新列表
     call();
     message.success('消息已发出');
-  }, [subTaskId]);
+  }, [subTaskId, mapRef.current]);
 
 
   const speak = (text: any) => {
@@ -366,8 +370,7 @@ export default function ExecuteWork() {
     });
   }, [dataArr, subTaskId, colKey, robotVoltages]);
 
-  console.log(111111111, robotVoltages);
-// 然后直接使用
+  // 然后直接使用
   useEffect(() => {
     setTimeline(timelineItems);
   }, [timelineItems]);
@@ -409,6 +412,22 @@ export default function ExecuteWork() {
 
       setDataArr(formatData);
 
+      const filterArray = formatData.filter(item => item.subTasks[0].execStatus === '执行中');
+      let checkTask
+
+      if (filterArray.length === 1) {
+        checkTask = filterArray[0]
+      } else {
+        checkTask = formatData[0]
+      }
+
+      const firstSubTask = checkTask.subTasks?.[0];
+      // const execStatus = firstSubTask?.execStatus;
+
+      setText(`执行任务${firstSubTask.taskName}，机器人${checkTask.robotCode}${taskType[firstSubTask.taskType]}至${checkTask.landName}`);
+      setSubTaskId(firstSubTask.subtaskId);
+      setTask(firstSubTask.taskType);
+
       (window as any).mapRef(data?.landInfos?.map((item: any) => {
         return {
           ...item,
@@ -423,6 +442,7 @@ export default function ExecuteWork() {
   useEffect(() => {
     // todo 存在mapRef.current值被清空的问题，故使用window转存变量
     (window as any).mapRef = mapRef.current?.execute;
+    (window as any).initRobot = mapRef.current?.initRobot;
 
     if (complete) {
       // 建立Websocket连接

@@ -5,6 +5,7 @@ import { history } from '@@/core/history';
 import { del, getWorkList, page } from './service';
 import { PlusOutlined } from '@ant-design/icons';
 import TreeCard from '@/pages/components/Tree';
+import { useSearchParams } from '@umijs/max';
 
 const taskTypeMap = {
   0: '喷洒',
@@ -30,6 +31,11 @@ const WorkOrder: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState();
   const [id, setID] = useState();
+
+  const [searchParams] = useSearchParams();
+
+  const urlId = searchParams.get('id');
+
 
   useEffect(() => {
     if (id) {
@@ -222,19 +228,22 @@ const WorkOrder: React.FC = () => {
   ];
 
   const onSelect = (node: any) => {
+    history.push({
+      pathname: `/task/workOrder/list?id=${ +node?.key}`
+    });
     setAreaId(+node?.key);
   };
 
   return (
     <Row gutter={16}>
       <Col flex='350px'>
-        <TreeCard onSelected={onSelect} />
+        <TreeCard onSelected={onSelect} selectedKeys={[+urlId]} />
       </Col>
       <Col flex='auto'>
         <ProTable<Land.Item>
           columns={columns}
           actionRef={formRef}
-          params={{ areaId: areaId }}
+          params={{ areaId: areaId || urlId }}
           style={{ position: 'absolute' }}
           headerTitle={<b>工单管理</b>}
           cardBordered={true}
@@ -260,7 +269,7 @@ const WorkOrder: React.FC = () => {
             <Button
               key='button'
               icon={<PlusOutlined />}
-              onClick={() => history.push('/task/workOrder/add')}
+              onClick={() => history.push(`/task/workOrder/add`)}
               type='primary'
             >
               新增

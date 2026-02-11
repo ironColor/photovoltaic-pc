@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import type { TreeProps } from 'antd';
 import { list } from '@/pages/Base/service';
 
-const TreeCard: React.FC<{ onSelected: (node: any) => void }> = ({ onSelected }) => {
+const TreeCard: React.FC<{ onSelected: (node: any) => void, selectedKeys: any[] }> = ({ onSelected, selectedKeys }) => {
   const [data, setData] = useState<[]>([]);
 
   useEffect(() => {
@@ -29,6 +29,7 @@ const TreeCard: React.FC<{ onSelected: (node: any) => void }> = ({ onSelected })
         <Tree
           showLine
           defaultExpandAll
+          selectedKeys={selectedKeys}
           onSelect={onSelect}
           treeData={data?.map((item: any) => ({
             title: item.areaName,

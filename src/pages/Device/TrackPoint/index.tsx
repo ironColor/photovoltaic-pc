@@ -107,42 +107,6 @@ const TrackPoint = () => {
             // https://ant.design/components/table-cn/#components-table-demo-row-selection-custom
             selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT]
           }}
-          tableAlertRender={({ selectedRowKeys, onCleanSelected }) => {
-            return (
-              <Space size={24}>
-              <span>
-                已选 {selectedRowKeys.length} 项
-                <a style={{ marginInlineStart: 8 }} onClick={onCleanSelected}>
-                  取消选择
-                </a>
-              </span>
-              </Space>
-            );
-          }}
-          tableAlertOptionRender={({ selectedRows }) => {
-            return (
-              <Space size={16}>
-                <Popconfirm
-                  title='确认删除?'
-                  okText='确认'
-                  cancelText='取消'
-                  onConfirm={async () => {
-                    const { code, msg } = await del(
-                      selectedRows.map((item: any) => item.orderId)
-                    );
-                    if (code === 0) {
-                      message.success('删除成功');
-                      formRef.current?.reload();
-                    } else {
-                      message.error(msg || '删除失败');
-                    }
-                  }}
-                >
-                  <span style={{ color: '#1677ff' }}>批量删除</span>
-                </Popconfirm>
-              </Space>
-            );
-          }}
         />
       </Col>
     </Row>

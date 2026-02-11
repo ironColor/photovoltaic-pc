@@ -42,7 +42,7 @@ const Index: React.FC<DisplayProps> = ({ count, status, voltage, voltage133 }) =
         {/*    '暂无数据'*/}
         {/*  )}*/}
         {/*</div>*/}
-        <div style={voltage && voltage < 89 ? { color: '#ff5858' } : undefined}>
+        <div style={voltage && voltage < 50 ? { color: '#ff5858' } : undefined}>
           飞机电量：{voltage ? voltage + 'V' : '暂无数据'}
         </div>
         <div>

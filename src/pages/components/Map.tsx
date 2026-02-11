@@ -2,6 +2,8 @@ import React, { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import AMapLoader from '@amap/amap-jsapi-loader';
 import '@amap/amap-jsapi-types';
 import gcoord from 'gcoord';
+import robot from '/public/picture/robot2.png';
+
 
 (window as any)._AMapSecurityConfig = {
   securityJsCode: '54e31215732849cfe60cf61458293212'
@@ -275,10 +277,8 @@ const Map: React.ForwardRefRenderFunction<
   };
 
   const initRobot = (pointInfo: any) => {
-    console.log(1122233, pointInfo)
     if (map.current) {
       const { robotCode, lon, lat } = pointInfo;
-
 
       // 1. 坐标转换：WGS84 → GCJ02（高德）
       const [lng, latGCJ] = gcoord.transform(
@@ -299,9 +299,12 @@ const Map: React.ForwardRefRenderFunction<
         // 创建新 marker
         marker = new AMap.current.Marker({
           position,
-          title: `机器人 ${robotCode}`,
+          label: { // 添加 label 配置
+            content: `机器人 ${robotCode}`, // 标签内容
+            direction: 'right' // 标签相对于标记点的方向
+          },
           // 可自定义图标，例如：
-          icon: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
+          icon: robot,
           // 或使用默认图标
           zIndex: 1000,
         });

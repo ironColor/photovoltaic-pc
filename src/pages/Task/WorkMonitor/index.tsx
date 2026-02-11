@@ -4,10 +4,15 @@ import { ProColumns, ProTable } from '@ant-design/pro-components';
 import { history } from '@@/core/history';
 import { page } from './service';
 import TreeCard from '@/pages/components/Tree';
+import { useSearchParams } from '@umijs/max';
 
 const WorkOrder: React.FC = () => {
   const formRef = useRef<any>();
   const [areaId, setAreaId] = useState<number>();
+
+  const [searchParams] = useSearchParams();
+
+  const urlId = searchParams.get('id');
 
   const columns: ProColumns<Land.Item>[] = [
     {
@@ -102,19 +107,22 @@ const WorkOrder: React.FC = () => {
   ];
 
   const onSelect = (node: any) => {
+    history.push({
+      pathname: `/task/workMonitor/list?id=${ +node?.key}`
+    });
     setAreaId(+node?.key);
   };
 
   return (
     <Row gutter={16}>
       <Col flex='350px'>
-        <TreeCard onSelected={onSelect} />
+        <TreeCard onSelected={onSelect}  selectedKeys={[+urlId]} />
       </Col>
       <Col flex='auto'>
         <ProTable<Land.Item>
           columns={columns}
           actionRef={formRef}
-          params={{ areaId: areaId }}
+          params={{ areaId: areaId || urlId  }}
           style={{ position: 'absolute' }}
           headerTitle={<b>工单监控</b>}
           cardBordered={true}

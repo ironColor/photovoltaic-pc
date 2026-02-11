@@ -528,6 +528,9 @@ export default function AddWorkOrder( ) {
   useEffect(() => {
     if (landName && orderType && landData.length > 0) {
       const today = moment().format('YYYY-MM-DD');
+      if (form.getFieldValue('orderName')) {
+        return
+      }
       form.setFieldsValue({ orderName: `${today}-${landName}-${orderType === 1 ? '干洗' : '水洗'}-${landData[0].landName}` });
     }
 
@@ -612,10 +615,10 @@ export default function AddWorkOrder( ) {
                 type='dashed'
                 icon={<PlusOutlined />}
                 onClick={() => {
-                  // if (!landId) {
-                  //   message.error('请先选择场地');
-                  //   return;
-                  // }
+                  if (!landId) {
+                    message.error('请先选择场地');
+                    return;
+                  }
                   setOpen(true)
                 }}
               >
