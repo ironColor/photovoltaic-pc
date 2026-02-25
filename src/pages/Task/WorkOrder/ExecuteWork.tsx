@@ -379,7 +379,7 @@ export default function ExecuteWork() {
     if (!dataArr?.length) return;
 
     const autoExpandKeys = new Set<string>(colKey); // 保留用户已展开的
-
+    console.log(11111, dataArr);
     for (const item of dataArr) {
       const firstSubTask = item.subTasks?.[0];
       if (firstSubTask?.execStatus === '执行中' && firstSubTask.subtaskId) {
@@ -414,11 +414,17 @@ export default function ExecuteWork() {
 
       const filterArray = formatData.filter(item => item.subTasks[0].execStatus === '执行中');
       let checkTask
-
+      console.log(22222, filterArray);
       if (filterArray.length === 1) {
         checkTask = filterArray[0]
       } else {
-        checkTask = formatData[0]
+        const todo = formatData.filter(item => item.subTasks[0].execStatus === '可执行');
+        console.log(222223, todo);
+        if (todo.length !== 0) {
+          checkTask = todo[0]
+        } else {
+          checkTask = formatData[0]
+        }
       }
 
       const firstSubTask = checkTask.subTasks?.[0];
@@ -465,15 +471,15 @@ export default function ExecuteWork() {
   }, [complete]);
 
   const onStart = async () => {
-    mapRef.current.initRobot(
-      {
-        "robotCode":"2",
-        "commandCode": 135,
-        "lon": 32.64222,//经度
-        "lat": 32.642222,//纬度
-        "alt": 32.642222 //高度
-      }
-    )
+    // mapRef.current.initRobot(
+    //   {
+    //     "robotCode":"2",
+    //     "commandCode": 135,
+    //     "lon": 32.64222,//经度
+    //     "lat": 32.642222,//纬度
+    //     "alt": 32.642222 //高度
+    //   }
+    // )
 
     if (subTaskId) {
       if (task === 2 || task === 4) {

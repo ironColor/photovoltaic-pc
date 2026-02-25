@@ -56,6 +56,7 @@ const Map: React.ForwardRefRenderFunction<
   const [showLegend, setShowLegend] = useState(false);
 
   const robotMarkersRef = useRef<Record<string, AMap.Marker>>({});
+  const infoWindowRef = useRef<any>(null); // 用于复用 InfoWindow
 
   const layersRef = useRef<{
     vector?: any;
@@ -280,14 +281,20 @@ const Map: React.ForwardRefRenderFunction<
     if (map.current) {
       const { robotCode, lon, lat } = pointInfo;
 
-      // 1. 坐标转换：WGS84 → GCJ02（高德）
       const [lng, latGCJ] = gcoord.transform(
         [lon, lat],
         gcoord.WGS84,
         gcoord.GCJ02
       );
 
-      // 2. 创建/更新 Marker
+      if (!infoWindowRef.current) {
+        infoWindowRef.current = new AMap.current.InfoWindow({
+          isCustom: true,
+          autoMove: true,
+          offset: new AMap.current.Pixel(7, -2),
+        });
+      }
+
       let marker = robotMarkersRef.current[robotCode];
 
       const position = new AMap.current.LngLat(lng, latGCJ);
@@ -296,7 +303,6 @@ const Map: React.ForwardRefRenderFunction<
         // 更新已有 marker 位置
         marker.setPosition(position);
       } else {
-        // 创建新 marker
         marker = new AMap.current.Marker({
           position,
           label: { // 添加 label 配置
@@ -307,6 +313,23 @@ const Map: React.ForwardRefRenderFunction<
           icon: robot,
           // 或使用默认图标
           zIndex: 1000,
+        });
+
+        marker.on('mouseover', () => {
+          // 构造显示内容：可显示原始 WGS84 或 GCJ02
+          const content = `
+        <div style="padding: 2px; font-size: 10px; line-height: 1;">
+          <div><b>经度:</b> ${lon.toFixed(6)}</div>
+          <div><b>纬度:</b> ${lat.toFixed(6)}</div>
+          <!-- 如需显示高德坐标，可用 lng/latGCJ -->
+        </div>
+      `;
+          infoWindowRef.current?.setContent(content);
+          infoWindowRef.current?.open(map.current, marker.getPosition());
+        });
+
+        marker.on('mouseout', () => {
+          infoWindowRef.current?.close();
         });
       }
       map.current.add(marker);
@@ -626,7 +649,7 @@ const Map: React.ForwardRefRenderFunction<
 
   return (
     <div>
-      <div style={{ position: 'absolute', bottom: '10px', left: '10px', zIndex: 1000, backgroundColor: 'white', padding: '10px', borderRadius: '5px', display: showLegend ? 'unset': 'none' }}>
+      <div style={{ position: 'absolute', bottom: '10px', left: '10px', zIndex: 1000, padding: '10px', borderRadius: '5px', display: showLegend ? 'unset': 'none' }}>
         <h4>图例</h4>
         <ul style={{ listStyleType: 'none', padding: 0 }}>
           {legendItems.map((item, index) => (
