@@ -279,10 +279,10 @@ const Map: React.ForwardRefRenderFunction<
 
   const initRobot = (pointInfo: any) => {
     if (map.current) {
-      const { robotCode, lon, lat } = pointInfo;
+      const { robotCode, longitude, latitude } = pointInfo;
 
       const [lng, latGCJ] = gcoord.transform(
-        [lon, lat],
+        [longitude, latitude],
         gcoord.WGS84,
         gcoord.GCJ02
       );

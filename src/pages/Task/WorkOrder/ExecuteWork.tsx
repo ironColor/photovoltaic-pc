@@ -472,16 +472,6 @@ export default function ExecuteWork() {
   }, [complete]);
 
   const onStart = async () => {
-    // mapRef.current.initRobot(
-    //   {
-    //     "robotCode":"2",
-    //     "commandCode": 135,
-    //     "lon": 32.64222,//经度
-    //     "lat": 32.642222,//纬度
-    //     "alt": 32.642222 //高度
-    //   }
-    // )
-
     if (subTaskId) {
       if (task === 2 || task === 4) {
         speak(text)
