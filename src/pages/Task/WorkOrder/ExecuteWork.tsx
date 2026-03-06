@@ -62,7 +62,7 @@ export default function ExecuteWork() {
   // ws 133的锁闩电压
   const [voltage, setVlotage] = useState<number>(null);
 
-  const call = useCallback(() => {
+  const call = useCallback((updateMap = true) => {
     const orderId = searchParams.get('id');
 
     if (orderLogId) {
@@ -79,7 +79,7 @@ export default function ExecuteWork() {
           }
         })
         setDataArr(formatData);
-        (window as any).mapRef(data?.landInfos?.map((item: any) => {
+        updateMap && (window as any).mapRef(data?.landInfos?.map((item: any) => {
           return {
             ...item,
             execStatus: item.subTasks[0]?.execStatus
@@ -100,7 +100,7 @@ export default function ExecuteWork() {
           }
         })
         setDataArr(formatData);
-        (window as any).mapRef(data?.landInfos?.map((item: any) => {
+        updateMap && (window as any).mapRef(data?.landInfos?.map((item: any) => {
           return {
             ...item,
             execStatus: item.subTasks[0]?.execStatus
@@ -181,7 +181,7 @@ export default function ExecuteWork() {
           ...prev,
           [data.robotCode]: [data.voltage1, data.voltage2] // 更新或新增机器人电压
         }));
-        call();
+        call(false);
       } else if (data.commandCode === 127) {
         message.error('机器人工作结束失败');
       } else if (data.commandCode === 0) {
