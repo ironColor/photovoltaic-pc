@@ -33,6 +33,8 @@ import p4 from '/public/picture/04.png';
 import p5 from '/public/picture/05.png';
 import p6 from '/public/picture/06.png';
 import p7 from '/public/picture/07.png';
+import reset from '/public/picture/reset.png';
+import close from '/public/picture/close.png'
 import Block from '@/pages/Task/Monitor/components/Block';
 import Display from '@/pages/Task/Monitor/components/Display';
 import { useEmotionCss } from '@ant-design/use-emotion-css';
@@ -220,16 +222,11 @@ export default function ExecuteWork() {
 
 
   const speak = (text: any) => {
-    // 创建语音实例
     const utterance = new SpeechSynthesisUtterance(text.replace(/(\d+)-(\d+)-(\d+)/g, '$1杠$2杠$3'));
-
-    // 可选：设置语音参数
-    utterance.lang = 'zh-CN';        // 语言
-    utterance.rate = 1;              // 语速 (0.1 ~ 10，默认 1)
-    utterance.pitch = 1;             // 音调 (0 ~ 2，默认 1)
-    utterance.volume = 1;            // 音量 (0 ~ 1)
-
-    // 播报
+    utterance.lang = 'zh-CN';
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.volume = 1;
     window.speechSynthesis.speak(utterance);
   };
 
@@ -301,12 +298,7 @@ export default function ExecuteWork() {
             {!!item.subTasks?.length && (
               <Collapse
                 size="small"
-                activeKey={colKey} // 直接使用状态
-                // onChange={(keys) => {
-                //   const newKeys = keys.filter(item => item === subTaskId?.toString());
-                //   console.log(111122, keys, newKeys, subTaskId);
-                //   setColKey(keys)
-                // }}
+                activeKey={colKey}
               >
                 {item.subTasks.map((task: any, index: number) => (
                   <Panel
@@ -529,6 +521,12 @@ export default function ExecuteWork() {
           <Button type='primary' danger onClick={cancel}>
             取消
           </Button>
+          {/*<Button type='primary' danger onClick={() => command(46)}  >*/}
+          {/*  关机*/}
+          {/*</Button>*/}
+          {/*<Button type='primary' danger onClick={() => command(47)}  >*/}
+          {/*  重启*/}
+          {/*</Button>*/}
           <Button onClick={() => history.back()}>返回</Button>
         </Space>
       }
@@ -554,6 +552,8 @@ export default function ExecuteWork() {
                 <OperationButton label='缩回锁闩' icon={p4} onClick={() => command(41)} />
                 <OperationButton label='投球算法校准' icon={p6} onClick={() => command(43)} />
                 <OperationButton label='投球算法验证' icon={p7} onClick={() => command(44)} />
+                <OperationButton label='关机' icon={close} onClick={() => command(46)} />
+                <OperationButton label='重启' icon={reset} onClick={() => command(47)} />
                 {/*<OperationButton label='连续执行' icon={p8} onClick={() => {}} />*/}
               </Space>
               <div className={styles.sign}>

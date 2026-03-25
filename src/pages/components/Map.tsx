@@ -28,7 +28,6 @@ const legendItems = [
 function isWithinLastMonth(timeStr) {
   if (!timeStr) return false;
 
-  // 兼容 Safari：把 "YYYY-MM-DD HH:mm:ss" 转成 ISO
   const time = new Date(timeStr.replace(' ', 'T'));
   if (isNaN(time.getTime())) return false;
 

@@ -16,17 +16,17 @@ const Log: React.FC = () => {
 
   const columns: ProColumns<any>[] = [
     {
-      title: '场地名称',
+      title: '电站',
       dataIndex: 'areaName',
       width: 270,
       ellipsis: true
     },
-    {
-      title: '工单名称',
-      dataIndex: 'orderName',
-      width: 270,
-      ellipsis: true
-    },
+    // {
+    //   title: '工单名称',
+    //   dataIndex: 'orderName',
+    //   width: 270,
+    //   ellipsis: true
+    // },
     {
       title: '工单类型',
       dataIndex: 'orderType',
@@ -42,13 +42,54 @@ const Log: React.FC = () => {
       }
     },
     {
-      title: '开始时间',
+      title: '负责人',
+      dataIndex: 'createName',
+      search: false,
+    },
+    {
+      title: '工作起始组串',
+      dataIndex: 'beginLandName',
+      search: false,
+    },
+    {
+      title: '起始时间',
       dataIndex: 'execStartTime',
       search: false
     },
     {
       title: '结束时间',
       dataIndex: 'execEndTime',
+      search: false
+    },
+    {
+      title: '执行机组',
+      dataIndex: 'uavName',
+      search: false
+    },
+    {
+      title: '清洁组串数量',
+      dataIndex: 'landIds',
+      search: false,
+      render: (_, row) => {
+        return <span>{row.landIds?.length}</span>
+      }
+    },
+    {
+      title: '未按计划清洁组串数量',
+      dataIndex: 'unLandIds',
+      search: false,
+      render: (_, row) => {
+        return <span>{row.unLandIds?.length}</span>
+      }
+    },
+    {
+      title: '失效数量',
+      dataIndex: 'failureCount',
+      search: false
+    },
+    {
+      title: '失效类型',
+      dataIndex: 'failureType',
       search: false
     },
     {

@@ -270,7 +270,6 @@ export default function AddWorkOrder( ) {
 
   const handleLandClick = (land: any) => {
     console.log('用户点击了地块:', land.landName, land.landId);
-    // 可以打开抽屉、设置表单、高亮列表等
   };
 
 
@@ -329,7 +328,6 @@ export default function AddWorkOrder( ) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 第一步：获取场地树（tree）
         const treeRes = await tree();
         const { code, msg, data } = treeRes;
 
@@ -575,11 +573,11 @@ export default function AddWorkOrder( ) {
                     value: 2
                   }
                 ]}
-                showSearch={false} // 如果不需要搜索可关闭
+                showSearch={false}
                 placeholder="请选择工单类型"
               />
             </Form.Item>
-            <Form.Item label='工单名称' rules={[{ required: true, message: '请输入工单名称' }]} name="orderName">
+            <Form.Item label='工单名称' rules={[{ required: true, message: '请输入工单名称' }]} name="orderName"  extra="时间 + 电站名称 + 工作类型 + 起始组串名" >
               <Input placeholder="请输入工单名称" />
             </Form.Item>
 
