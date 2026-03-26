@@ -521,12 +521,6 @@ export default function ExecuteWork() {
           <Button type='primary' danger onClick={cancel}>
             取消
           </Button>
-          {/*<Button type='primary' danger onClick={() => command(46)}  >*/}
-          {/*  关机*/}
-          {/*</Button>*/}
-          {/*<Button type='primary' danger onClick={() => command(47)}  >*/}
-          {/*  重启*/}
-          {/*</Button>*/}
           <Button onClick={() => history.back()}>返回</Button>
         </Space>
       }

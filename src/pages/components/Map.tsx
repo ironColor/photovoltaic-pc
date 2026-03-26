@@ -299,28 +299,23 @@ const Map: React.ForwardRefRenderFunction<
       const position = new AMap.current.LngLat(lng, latGCJ);
 
       if (marker) {
-        // 更新已有 marker 位置
         marker.setPosition(position);
       } else {
         marker = new AMap.current.Marker({
           position,
-          label: { // 添加 label 配置
-            content: `机器人 ${robotCode}`, // 标签内容
-            direction: 'right' // 标签相对于标记点的方向
+          label: {
+            content: `机器人 ${robotCode}`,
+            direction: 'right'
           },
-          // 可自定义图标，例如：
           icon: robot,
-          // 或使用默认图标
           zIndex: 1000,
         });
 
         marker.on('mouseover', () => {
-          // 构造显示内容：可显示原始 WGS84 或 GCJ02
           const content = `
         <div style="padding: 2px; font-size: 10px; line-height: 1;">
-          <div><b>经度:</b> ${lon.toFixed(6)}</div>
-          <div><b>纬度:</b> ${lat.toFixed(6)}</div>
-          <!-- 如需显示高德坐标，可用 lng/latGCJ -->
+          <div><b>经度:</b> ${longitude}</div>
+          <div><b>纬度:</b> ${latitude}</div>
         </div>
       `;
           infoWindowRef.current?.setContent(content);
