@@ -77,14 +77,17 @@ export default function ExecuteWork() {
         const formatData = data?.landInfos?.map((item: any) => {
           return {
             ...item,
-            execStatus: item.subTasks[0]?.execStatus
+            execStatus: item.subTasks[0]?.execStatus,
+            cleanEndTime: item.subTasks[0]?.cleanEndTime
           }
         })
+        console.log(11112, formatData, data.landInfos);
         setDataArr(formatData);
         updateMap && (window as any).mapRef(data?.landInfos?.map((item: any) => {
           return {
             ...item,
-            execStatus: item.subTasks[0]?.execStatus
+            execStatus: item.subTasks[0]?.execStatus,
+            cleanEndTime: item.subTasks[0]?.cleanEndTime
           }
         }));
       })
@@ -98,14 +101,16 @@ export default function ExecuteWork() {
         const formatData = data?.landInfos?.map((item: any) => {
           return {
             ...item,
-            execStatus: item.subTasks[0]?.execStatus
+            execStatus: item.subTasks[0]?.execStatus,
+            cleanEndTime: item.subTasks[0]?.cleanEndTime
           }
         })
         setDataArr(formatData);
         updateMap && (window as any).mapRef(data?.landInfos?.map((item: any) => {
           return {
             ...item,
-            execStatus: item.subTasks[0]?.execStatus
+            execStatus: item.subTasks[0]?.execStatus,
+            cleanEndTime: item.subTasks[0]?.cleanEndTime
           }
         }));
       })
@@ -244,7 +249,7 @@ export default function ExecuteWork() {
     });
   }, []);
 
-  const execStatusFc = useCallback((status: string) => {
+  const execStatusFc = useCallback((status: string, cleanEndTime?: string) => {
     const statusColors: Record<string, string> = {
       待执行: 'gray',
       可执行: 'gray',
@@ -254,6 +259,11 @@ export default function ExecuteWork() {
       中断: 'red',
       取消: 'red'
     };
+
+    if (cleanEndTime && status === '已完成') {
+      return '#62c400'
+    }
+
     // 默认返回一个颜色，防止未知状态
     return statusColors[status] || 'red';
   }, []);
@@ -330,7 +340,7 @@ export default function ExecuteWork() {
                               {dotType[cmd.type]}
                             </>
                           ),
-                          color: execStatusFc(cmd.execStatus),
+                          color: execStatusFc(cmd.execStatus, cmd.cleanEndTime),
                           dot: cmd.execStatus === '执行中' ? <LoadingOutlined /> : undefined,
                         }))}
                       />
@@ -400,7 +410,8 @@ export default function ExecuteWork() {
 
       const formatData = data.landInfos.map((item: any) => ({
         ...item,
-        execStatus: item.subTasks?.[0].execStatus
+        execStatus: item.subTasks?.[0].execStatus,
+        cleanEndTime: item.subTasks[0]?.cleanEndTime
       }));
 
       setDataArr(formatData);
@@ -430,7 +441,8 @@ export default function ExecuteWork() {
       (window as any).mapRef(data?.landInfos?.map((item: any) => {
         return {
           ...item,
-          execStatus: item.subTasks[0]?.execStatus
+          execStatus: item.subTasks[0]?.execStatus,
+          cleanEndTime: item.subTasks[0]?.cleanEndTime
         }
       }));
       setOrderLogId(data.orderLogId)

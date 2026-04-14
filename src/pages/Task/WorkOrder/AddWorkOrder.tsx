@@ -1,4 +1,18 @@
-import { Badge, Button, Col, Form, Input, message, Modal, Row, Select, Space, Table, Tag } from 'antd';
+import {
+  Badge,
+  Button,
+  Col,
+  Form,
+  Input,
+  InputNumber,
+  message,
+  Modal,
+  Row,
+  Select,
+  Space,
+  Table,
+  Tag
+} from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Map from '@/pages/components/Map';
 import moment from 'moment';
@@ -56,9 +70,12 @@ export default function AddWorkOrder( ) {
   const [page, setPage] = useState(1);
   const [all, setAll] = useState<any[]>([]);
   // 用于储存当前选中的
-  const [select, setSelect] = useState<any[]>([])
+  const [select, setSelect] = useState<any[]>([]);
 
-  const handleColumns = useCallback((simple: boolean) => {
+  const [currentPageData, setCurrentPageData] = useState<Land.Item[]>([]);
+
+
+    const handleColumns = useCallback((simple: boolean) => {
     if (simple) {
       return [
         // {
@@ -366,7 +383,8 @@ export default function AddWorkOrder( ) {
           uploadPointId: detailData.uploadPointId,
           uavConfigId: detailData.uavConfigId,
           estimatedWorkTime: detailData.estimatedWorkTime,
-          robotIds: detailData.robotIds
+          robotIds: detailData.robotIds,
+          safeHeight: detailData.safeHeight
         });
 
 
@@ -577,7 +595,7 @@ export default function AddWorkOrder( ) {
                 placeholder="请选择工单类型"
               />
             </Form.Item>
-            <Form.Item label='工单名称' rules={[{ required: true, message: '请输入工单名称' }]} name="orderName"  extra="时间 + 电站名称 + 工作类型 + 起始组串名" >
+            <Form.Item label='工单名称' rules={[{ required: true, message: '请输入工单名称' }]} name="orderName"  extra="时间 + 场地名称 + 工单类型 + 起始组串名" >
               <Input placeholder="请输入工单名称" />
             </Form.Item>
 
@@ -631,6 +649,9 @@ export default function AddWorkOrder( ) {
                 onChange={handleGroupChange}
               />
             </Form.Item>
+              <Form.Item label='安全高度' name="safeHeight" >
+                  <InputNumber precision={2} min={0}  />
+              </Form.Item>
             {
               !isSpray &&  <Form.Item label="机器人"  rules={[{ required: true, message: '请选择机器人' }]} name="robotIds">
                 <Select
@@ -716,6 +737,8 @@ export default function AddWorkOrder( ) {
                   data: { records, total },
                   code
                 } = await land({...params, areaId: landId });
+
+                setCurrentPageData(records);
                 return { data: records, success: !code, total: total };
               }}
               rowKey='landId'
@@ -728,28 +751,51 @@ export default function AddWorkOrder( ) {
               rowSelection={{
                 selectedRowKeys: select.map(item => item.landId),
                 onChange: (keys, rows) => {
-                  const newMap = { ...selectedRecordsMap };
+                  //   console.log(111, keys, select, selectedRecordsMap, page);
+                  // const newMap = { ...selectedRecordsMap };
+                  //
+                  // // 只做一件事：补充当前页选中的 row
+                  // rows.forEach(row => {
+                  //   row.page = page
+                  //   newMap[row.landId] = row;
+                  // });
+                  // setSelectedRecordsMap(newMap);
+                  // // // 同步 landData（按 selectedRowKeys 顺序）
+                  // //   const newData = [...Object.values(newMap), ...rows]
+                  // const newData = Object.values(newMap)
+                  //   .map((item, i) => {
+                  //     if (item.page !== page) {
+                  //       return { ...item, sort: i  }
+                  //     } else {
+                  //       // 是当前页的 则要通过keys来判断
+                  //       if (keys.includes(item.landId)) {
+                  //         return { ...item, sort: i  }
+                  //       }
+                  //     }
+                  //   }).filter(item => item !== undefined);
+                  // setSelect(newData);
 
-                  // 只做一件事：补充当前页选中的 row
-                  rows.forEach(row => {
-                    row.page = page
-                    newMap[row.landId] = row;
-                  });
-                  setSelectedRecordsMap(newMap);
-                  // 同步 landData（按 selectedRowKeys 顺序）
-                  const newData = Object.values(newMap)
-                    .map((item, i) => {
-                      if (item.page !== page) {
-                        return { ...item, sort: i  }
-                      } else {
-                        // 是当前页的 则要通过keys来判断
-                        if (keys.includes(item.landId)) {
-                          return { ...item, sort: i  }
-                        }
-                      }
-                    }).filter(item => item !== undefined);
-                  setSelect(newData);
                   // setLandData(newData);
+                    const newMap = { ...selectedRecordsMap };
+
+                    // 获取当前页所有 landId
+                    const currentPageIds = currentPageData.map(item => item.landId);
+
+                    // 1. 移除当前页中未被选中的项
+                    currentPageIds.forEach(id => {
+                        if (!keys.includes(id)) {
+                            delete newMap[id];
+                        }
+                    });
+
+                    // 2. 添加当前页中新选中的项
+                    rows.forEach(row => {
+                        newMap[row.landId] = row;
+                    });
+
+                    setSelectedRecordsMap(newMap);
+                    setSelect(Object.values(newMap));
+
                 },
                 selections: [Table.SELECTION_INVERT], // 移除全选，避免误导
                 getCheckboxProps: (record) => ({
@@ -763,8 +809,8 @@ export default function AddWorkOrder( ) {
                   已选 {selectedRowKeys.length} 项
 
                   <Button type="primary" style={{ marginInlineStart: 8 }} onClick={() => {
-                    setLandData(select);
-                    setOpen(false);
+                      setLandData(Object.values(selectedRecordsMap)); // 使用全局选中数据
+                      setOpen(false);
                   }}>
                     确认
                   </Button>

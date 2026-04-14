@@ -422,6 +422,7 @@ const Map: React.ForwardRefRenderFunction<
    * @param air 飞机位置
    */
   const execute = (position: [] = [], air?: [number, number]) => {
+    console.log(22333, position);
     map.current?.clearMap();
     console.log('execute~~~', position);
     // 判断，初次为初始化对象时，直接返回
@@ -435,10 +436,10 @@ const Map: React.ForwardRefRenderFunction<
 
       const overlay = new AMap.current.Polygon({
         path: path,
-        fillColor: color(item.execStatus, 0),
+        fillColor: color(item.execStatus, item.cleanEndTime ? 1 : 0),
         fillOpacity: item.taskType === 0 ? 0 : 0.8,
         strokeStyle: item.taskType === 0 ? 'dashed' : 'solid',
-        strokeColor: color(item.execStatus, 0),
+        strokeColor: color(item.execStatus, item.cleanEndTime ? 1 : 0),
         strokeWeight: item.taskType === 0 ? 3 : 0
       });
       map.current.add(overlay);
