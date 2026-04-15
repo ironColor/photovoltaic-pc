@@ -81,12 +81,47 @@ export default function ExecuteWork() {
             cleanEndTime: item.subTasks[0]?.cleanEndTime
           }
         })
-        console.log(11112, formatData, data.landInfos);
+
+        const orderType = data.orderType;
+
+        const status = (execStatus, cleanEndTime, countDownTime ) => {
+          if (orderType === 1 && execStatus === '已完成' && cleanEndTime) {
+            return '已清扫'
+          }
+
+          if (orderType === 1 && execStatus === '已完成' && countDownTime) {
+            return '清扫中'
+          }
+
+          if (orderType === 1 && execStatus !== '已完成') {
+            return '未清扫'
+          }
+
+          if (orderType === 2 && execStatus === '已完成' && cleanEndTime) {
+            return '已喷洒'
+          }
+
+          if (orderType === 2 && execStatus === '已完成' && countDownTime) {
+            return '喷洒中'
+          }
+
+          if (orderType === 2 && execStatus !== '已完成') {
+            return '未喷洒'
+          }
+
+          if (execStatus === '已完成') {
+            return '已完成'
+          }
+
+          return '未完成'
+
+        }
+
         setDataArr(formatData);
         updateMap && (window as any).mapRef(data?.landInfos?.map((item: any) => {
           return {
             ...item,
-            execStatus: item.subTasks[0]?.execStatus,
+            execStatus: item.landRenderingStatus,
             cleanEndTime: item.subTasks[0]?.cleanEndTime
           }
         }));
@@ -105,11 +140,47 @@ export default function ExecuteWork() {
             cleanEndTime: item.subTasks[0]?.cleanEndTime
           }
         })
+
+        const orderType = data.orderType;
+
+        const status = (execStatus, cleanEndTime, countDownTime ) => {
+          if (orderType === 1 && execStatus === '已完成' && cleanEndTime) {
+            return '已清扫'
+          }
+
+          if (orderType === 1 && execStatus === '已完成' && countDownTime) {
+            return '清扫中'
+          }
+
+          if (orderType === 1 && execStatus !== '已完成') {
+            return '未清扫'
+          }
+
+          if (orderType === 2 && execStatus === '已完成' && cleanEndTime) {
+            return '已喷洒'
+          }
+
+          if (orderType === 2 && execStatus === '已完成' && countDownTime) {
+            return '喷洒中'
+          }
+
+          if (orderType === 2 && execStatus !== '已完成') {
+            return '未喷洒'
+          }
+
+          if (execStatus === '已完成') {
+            return '已完成'
+          }
+
+          return '未完成'
+
+        }
+
         setDataArr(formatData);
         updateMap && (window as any).mapRef(data?.landInfos?.map((item: any) => {
           return {
             ...item,
-            execStatus: item.subTasks[0]?.execStatus,
+            execStatus: item.landRenderingStatus,
             cleanEndTime: item.subTasks[0]?.cleanEndTime
           }
         }));
@@ -417,13 +488,11 @@ export default function ExecuteWork() {
       setDataArr(formatData);
 
       const filterArray = formatData.filter(item => item.subTasks[0].execStatus === '执行中');
-      let checkTask
-      console.log(22222, filterArray);
+      let checkTask;
       if (filterArray.length === 1) {
         checkTask = filterArray[0]
       } else {
         const todo = formatData.filter(item => item.subTasks[0].execStatus === '可执行');
-        console.log(222223, todo);
         if (todo.length !== 0) {
           checkTask = todo[0]
         } else {
@@ -438,11 +507,45 @@ export default function ExecuteWork() {
       setSubTaskId(firstSubTask.subtaskId);
       setTask(firstSubTask.taskType);
 
+      const orderType = data.orderType;
+
+      const status = (execStatus, cleanEndTime, countDownTime ) => {
+        if (orderType === 1 && execStatus === '已完成' && cleanEndTime) {
+          return '已清扫'
+        }
+
+        if (orderType === 1 && execStatus === '已完成' && countDownTime) {
+          return '清扫中'
+        }
+
+        if (orderType === 1 && execStatus !== '已完成') {
+          return '未清扫'
+        }
+
+        if (orderType === 2 && execStatus === '已完成' && cleanEndTime) {
+          return '已喷洒'
+        }
+
+        if (orderType === 2 && execStatus === '已完成' && countDownTime) {
+          return '喷洒中'
+        }
+
+        if (orderType === 2 && execStatus !== '已完成') {
+          return '未喷洒'
+        }
+
+        if (execStatus === '已完成') {
+          return '已完成'
+        }
+
+        return '未完成'
+
+      }
+
       (window as any).mapRef(data?.landInfos?.map((item: any) => {
         return {
           ...item,
-          execStatus: item.subTasks[0]?.execStatus,
-          cleanEndTime: item.subTasks[0]?.cleanEndTime
+          execStatus: item.landRenderingStatus
         }
       }));
       setOrderLogId(data.orderLogId)
@@ -462,6 +565,7 @@ export default function ExecuteWork() {
       }
       // execWS?.connect && execWS?.connect();
       // 执行地图数据初始化
+      console.log(11112222223);
       mapRef.current?.execute?.(dataArr);
     }
 

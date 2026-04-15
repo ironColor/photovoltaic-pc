@@ -650,7 +650,7 @@ export default function AddWorkOrder( ) {
               />
             </Form.Item>
               <Form.Item label='安全高度' name="safeHeight" >
-                  <InputNumber precision={2} min={0}  />
+                  <InputNumber precision={2} min={0} placeholder={"清洗起飞点下方光伏板，请输入安全高度"} style={{ width: '300px' }} />
               </Form.Item>
             {
               !isSpray &&  <Form.Item label="机器人"  rules={[{ required: true, message: '请选择机器人' }]} name="robotIds">

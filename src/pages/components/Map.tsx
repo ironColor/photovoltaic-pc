@@ -436,18 +436,19 @@ const Map: React.ForwardRefRenderFunction<
 
       const overlay = new AMap.current.Polygon({
         path: path,
-        fillColor: color(item.execStatus, item.cleanEndTime ? 1 : 0),
+        fillColor: color(item.execStatus, 0),
         fillOpacity: item.taskType === 0 ? 0 : 0.8,
         strokeStyle: item.taskType === 0 ? 'dashed' : 'solid',
-        strokeColor: color(item.execStatus, item.cleanEndTime ? 1 : 0),
+        strokeColor: borderColor(item.execStatus, 0),
         strokeWeight: item.taskType === 0 ? 3 : 0
       });
       map.current.add(overlay);
     });
 
     const lines: any = position?.filter(
-      (item: { execStatus: string }) => item.execStatus === '执行中'
+      (item: { execStatus: string, subTasks: any[] }) => item.subTasks.filter(task => task.execStatus === '执行中').length > 0
     );
+    console.log(1111, lines);
     lines.length > 0 && execLines(lines);
     // 飞机的实时位置
     if (air && air?.length > 0) {
@@ -616,6 +617,44 @@ const Map: React.ForwardRefRenderFunction<
       return '#f3ac00';
     } else if (execStatus === '失败' || execStatus === '中断' || execStatus === '取消') {
       return 'rgb(255,102,102)';
+    } else if (execStatus === '已清扫') {
+      return '#62c400'
+    } else if (execStatus === '清扫中') {
+      return '#f3ac00'
+    }else if (execStatus === '未清扫') {
+      return '#BFBFBF'
+    }else if (execStatus === '已喷洒') {
+      return ''
+    }else if (execStatus === '喷洒中') {
+      return ''
+    } else if (execStatus === '未喷洒') {
+      return ''
+    } else {
+      return '#BFBFBF';
+    }
+  };
+
+  const borderColor = (execStatus: string, type: number) => {
+    if (execStatus === '待执行') {
+      return '#BFBFBF';
+    } else if (execStatus === '已完成') {
+      return type === 0 ? '#62c400' : '#1677ff';
+    } else if (execStatus === '执行中') {
+      return '#f3ac00';
+    } else if (execStatus === '失败' || execStatus === '中断' || execStatus === '取消') {
+      return 'rgb(255,102,102)';
+    } else if (execStatus === '已清扫') {
+      return '#62c400'
+    } else if (execStatus === '清扫中') {
+      return '#f3ac00'
+    }else if (execStatus === '未清扫') {
+      return '#BFBFBF'
+    }else if (execStatus === '已喷洒') {
+      return '#62c400'
+    }else if (execStatus === '喷洒中') {
+      return '#f3ac00'
+    } else if (execStatus === '未喷洒') {
+      return '#bfbfbf'
     } else {
       return '#BFBFBF';
     }
