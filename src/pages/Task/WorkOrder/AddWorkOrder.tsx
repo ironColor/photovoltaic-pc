@@ -309,7 +309,7 @@ export default function AddWorkOrder( ) {
       value: item.robotId
     })))
     // 选择机组后默认全部机器人
-    form.setFieldsValue({ robotIds: option.robots.map(item => item.robotId) })
+    // form.setFieldsValue({ robotIds: option.robots.map(item => item.robotId) })
   }, []);
 
   const onFinish = async (value: any) => {

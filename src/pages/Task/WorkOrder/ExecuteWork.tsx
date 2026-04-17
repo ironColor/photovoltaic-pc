@@ -82,41 +82,6 @@ export default function ExecuteWork() {
           }
         })
 
-        const orderType = data.orderType;
-
-        const status = (execStatus, cleanEndTime, countDownTime ) => {
-          if (orderType === 1 && execStatus === '已完成' && cleanEndTime) {
-            return '已清扫'
-          }
-
-          if (orderType === 1 && execStatus === '已完成' && countDownTime) {
-            return '清扫中'
-          }
-
-          if (orderType === 1 && execStatus !== '已完成') {
-            return '未清扫'
-          }
-
-          if (orderType === 2 && execStatus === '已完成' && cleanEndTime) {
-            return '已喷洒'
-          }
-
-          if (orderType === 2 && execStatus === '已完成' && countDownTime) {
-            return '喷洒中'
-          }
-
-          if (orderType === 2 && execStatus !== '已完成') {
-            return '未喷洒'
-          }
-
-          if (execStatus === '已完成') {
-            return '已完成'
-          }
-
-          return '未完成'
-
-        }
-
         setDataArr(formatData);
         updateMap && (window as any).mapRef(data?.landInfos?.map((item: any) => {
           return {
@@ -140,41 +105,6 @@ export default function ExecuteWork() {
             cleanEndTime: item.subTasks[0]?.cleanEndTime
           }
         })
-
-        const orderType = data.orderType;
-
-        const status = (execStatus, cleanEndTime, countDownTime ) => {
-          if (orderType === 1 && execStatus === '已完成' && cleanEndTime) {
-            return '已清扫'
-          }
-
-          if (orderType === 1 && execStatus === '已完成' && countDownTime) {
-            return '清扫中'
-          }
-
-          if (orderType === 1 && execStatus !== '已完成') {
-            return '未清扫'
-          }
-
-          if (orderType === 2 && execStatus === '已完成' && cleanEndTime) {
-            return '已喷洒'
-          }
-
-          if (orderType === 2 && execStatus === '已完成' && countDownTime) {
-            return '喷洒中'
-          }
-
-          if (orderType === 2 && execStatus !== '已完成') {
-            return '未喷洒'
-          }
-
-          if (execStatus === '已完成') {
-            return '已完成'
-          }
-
-          return '未完成'
-
-        }
 
         setDataArr(formatData);
         updateMap && (window as any).mapRef(data?.landInfos?.map((item: any) => {
@@ -507,40 +437,6 @@ export default function ExecuteWork() {
       setSubTaskId(firstSubTask.subtaskId);
       setTask(firstSubTask.taskType);
 
-      const orderType = data.orderType;
-
-      const status = (execStatus, cleanEndTime, countDownTime ) => {
-        if (orderType === 1 && execStatus === '已完成' && cleanEndTime) {
-          return '已清扫'
-        }
-
-        if (orderType === 1 && execStatus === '已完成' && countDownTime) {
-          return '清扫中'
-        }
-
-        if (orderType === 1 && execStatus !== '已完成') {
-          return '未清扫'
-        }
-
-        if (orderType === 2 && execStatus === '已完成' && cleanEndTime) {
-          return '已喷洒'
-        }
-
-        if (orderType === 2 && execStatus === '已完成' && countDownTime) {
-          return '喷洒中'
-        }
-
-        if (orderType === 2 && execStatus !== '已完成') {
-          return '未喷洒'
-        }
-
-        if (execStatus === '已完成') {
-          return '已完成'
-        }
-
-        return '未完成'
-
-      }
 
       (window as any).mapRef(data?.landInfos?.map((item: any) => {
         return {
@@ -564,9 +460,13 @@ export default function ExecuteWork() {
         execWS?.connect()
       }
       // execWS?.connect && execWS?.connect();
-      // 执行地图数据初始化
+      // 执行地图数据初始化 地块展示时，状态要用landRenderingStatus
       console.log(11112222223);
-      mapRef.current?.execute?.(dataArr);
+      const formatData = dataArr.map(item => ({
+        ...item,
+        execStatus: item.landRenderingStatus
+      }))
+      mapRef.current?.execute?.(formatData);
     }
 
     return () => {

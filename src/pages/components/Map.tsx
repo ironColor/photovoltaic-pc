@@ -436,10 +436,10 @@ const Map: React.ForwardRefRenderFunction<
 
       const overlay = new AMap.current.Polygon({
         path: path,
-        fillColor: color(item.execStatus, 0),
+        fillColor: color(item.landRenderingStatus, 0),
         fillOpacity: item.taskType === 0 ? 0 : 0.8,
         strokeStyle: item.taskType === 0 ? 'dashed' : 'solid',
-        strokeColor: borderColor(item.execStatus, 0),
+        strokeColor: borderColor(item.landRenderingStatus, 0),
         strokeWeight: item.taskType === 0 ? 3 : 0
       });
       map.current.add(overlay);
