@@ -78,11 +78,11 @@ export default function AddWorkOrder( ) {
     const handleColumns = useCallback((simple: boolean) => {
     if (simple) {
       return [
-        // {
-        //   title: '排序',
-        //   dataIndex: 'sort',
-        //   width: 60
-        // },
+        {
+          title: '排序',
+          dataIndex: 'sort',
+          width: 60
+        },
         {
           title: '组串名称',
           dataIndex: 'landName',
@@ -393,7 +393,7 @@ export default function AddWorkOrder( ) {
         setLandId(detailData.areaId);
 
         setRobotsId(detailData.robotIds);
-        setLandData(detailData.landList);
+        setLandData(detailData.landList.map((item, index) => ({ ...item, sort: index})));
         getAllLand(detailData.areaId)
         // // 同步选中
         const newMap = {};
@@ -624,7 +624,6 @@ export default function AddWorkOrder( ) {
                 onDragSortEnd={handleDragSortEnd}
                 style={{ width: '90%' }}
                 pagination={false}
-                scroll={{ y: 400 }}
               />
               <Button
                 style={{ width: '90%', marginTop: '12px' }}
@@ -809,7 +808,7 @@ export default function AddWorkOrder( ) {
                   已选 {selectedRowKeys.length} 项
 
                   <Button type="primary" style={{ marginInlineStart: 8 }} onClick={() => {
-                      setLandData(Object.values(selectedRecordsMap)); // 使用全局选中数据
+                      setLandData(Object.values(selectedRecordsMap).map((item, index) => ({ ...item, sort: index}))); // 使用全局选中数据
                       setOpen(false);
                   }}>
                     确认
