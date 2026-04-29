@@ -292,22 +292,37 @@ export default function AddWorkOrder( ) {
       const isExist = prev.some(item => item.landId === land.landId);
       
       if (isExist) {
-        message.warning('该组串已存在');
-        return prev;
+        // 地块已存在，取消选中
+        const newLandData = prev
+          .filter(item => item.landId !== land.landId)
+          .map((item, index) => ({
+            ...item,
+            sort: index
+          }));
+        
+        const newMap = { ...selectedRecordsMap };
+        delete newMap[land.landId];
+        setSelectedRecordsMap(newMap);
+        
+        mapRef.current?.resetLand(land.landId.toString());
+        message.success(`已取消组串：${land.landName}`);
+        
+        return newLandData;
+      } else {
+        // 地块不存在，添加选中
+        const newLandData = [...prev, {
+          ...land,
+          sort: prev.length
+        }];
+        
+        const newMap = { ...selectedRecordsMap };
+        newMap[land.landId] = land;
+        setSelectedRecordsMap(newMap);
+        
+        message.success(`已添加组串：${land.landName}`);
+        
+        return newLandData;
       }
-      
-      const newLandData = [...prev, {
-        ...land,
-        sort: prev.length
-      }];
-      
-      const newMap = { ...selectedRecordsMap };
-      newMap[land.landId] = land;
-      setSelectedRecordsMap(newMap);
-      
-      message.success(`已添加组串：${land.landName}`);
-      
-      return newLandData;
     });
   };
 

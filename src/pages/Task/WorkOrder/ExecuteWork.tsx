@@ -382,7 +382,6 @@ export default function ExecuteWork() {
     if (!dataArr?.length) return;
 
     const autoExpandKeys = new Set<string>(colKey); // 保留用户已展开的
-    console.log(11111, dataArr);
     for (const item of dataArr) {
       const firstSubTask = item.subTasks?.filter(item => item.execStatus === '执行中')[0];
       if (firstSubTask?.execStatus === '执行中' && firstSubTask.subtaskId) {
