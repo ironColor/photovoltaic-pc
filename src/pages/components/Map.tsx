@@ -715,20 +715,21 @@ const Map: React.ForwardRefRenderFunction<
   }));
 
   return (
-    <div>
-      <div style={{ position: 'absolute', bottom: '10px', left: '10px', zIndex: 1000, padding: '10px', borderRadius: '5px', display: showLegend ? 'unset': 'none' }}>
-        <h4>图例</h4>
-        <ul style={{ listStyleType: 'none', padding: 0 }}>
+    <div style={{ position: 'relative' }}>
+      <div style={{ position: 'absolute', bottom: '10px', left: '10px', zIndex: 1000, padding: '10px', borderRadius: '5px', display: showLegend ? 'unset': 'none', backgroundColor: 'rgba(255, 255, 255, 0.9)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>图例</h4>
+        <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
           {legendItems.map((item, index) => (
             <li key={index} style={{ marginBottom: '5px', display: 'flex', alignItems: 'center' }}>
             <span style={{
-              width: '10px',
-              height: '10px',
+              width: '12px',
+              height: '12px',
               backgroundColor: item.color,
-              marginRight: '5px',
-              display: 'inline-block'
+              marginRight: '8px',
+              display: 'inline-block',
+              borderRadius: '2px'
             }}></span>
-              <span>{item.label}</span>
+              <span style={{ fontSize: '12px' }}>{item.label}</span>
             </li>
           ))}
         </ul>
@@ -746,7 +747,7 @@ const Map: React.ForwardRefRenderFunction<
           ...props.styles
         }}
       />
-      <button onClick={toggleMapView} style={{ position: 'absolute', top: '10px', left: '10px' }}>
+      <button onClick={toggleMapView} style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 1000, padding: '6px 12px', backgroundColor: 'white', border: '1px solid #d9d9d9', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
         切换到 {isSatelliteView ? '矢量图' : '卫星图'}
       </button>
     </div>
