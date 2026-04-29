@@ -172,6 +172,15 @@ const Map: React.ForwardRefRenderFunction<
           fillColor: item.isSlopeTooLarge ? 'red' : isWithinLastMonth(item.lastCleanTime) ? 'green' : 'grey',
           cursor: item.isSlopeTooLarge ? '' : 'pointer',
           clickable: true,
+          extData: {
+            preColor: item.isSlopeTooLarge ? 'red' : isWithinLastMonth(item.lastCleanTime) ? 'green' : 'grey'
+          }
+        });
+
+        polygon.on('click', () => {
+          if (!item.isSlopeTooLarge) {
+            props.onLandClick?.(item);
+          }
         });
 
         map.current.add(polygon);
@@ -193,6 +202,12 @@ const Map: React.ForwardRefRenderFunction<
           },
           zIndex: 200,
           clickable: true
+        });
+
+        text.on('click', () => {
+          if (!item.isSlopeTooLarge) {
+            props.onLandClick?.(item);
+          }
         });
 
         map.current.add(text);
@@ -338,12 +353,16 @@ const Map: React.ForwardRefRenderFunction<
     landIds.forEach(id => {
       const targetPoly = polygonMap.current[id];
       if (targetPoly) {
+        const currentOptions = targetPoly.getOptions();
+        const extData = targetPoly.getExtData() || {};
+        
         targetPoly.setOptions({
           fillColor: 'yellow',
           fillOpacity: 0.6,
           strokeWeight: 2,
           extData: {
-            preColor: targetPoly.getOptions().fillColor
+            ...extData,
+            preColor: extData.preColor || currentOptions.fillColor
           }
         });
       }
@@ -360,6 +379,22 @@ const Map: React.ForwardRefRenderFunction<
         strokeWeight: 2,
       });
     }
+  }
+
+  const resetAllLands = () => {
+    if (!map.current) return;
+
+    Object.keys(polygonMap.current).forEach(id => {
+      const targetPoly = polygonMap.current[id];
+      if (targetPoly) {
+        const extData = targetPoly.getExtData() || {};
+        targetPoly.setOptions({
+          fillColor: extData.preColor || targetPoly.getOptions().fillColor,
+          fillOpacity: 0.6,
+          strokeWeight: 2,
+        });
+      }
+    });
   }
 
 
@@ -422,7 +457,6 @@ const Map: React.ForwardRefRenderFunction<
    * @param air 飞机位置
    */
   const execute = (position: [] = [], air?: [number, number]) => {
-    console.log(22333, position);
     map.current?.clearMap();
     console.log('execute~~~', position);
     // 判断，初次为初始化对象时，直接返回
@@ -448,7 +482,6 @@ const Map: React.ForwardRefRenderFunction<
     const lines: any = position?.filter(
       (item: { execStatus: string, subTasks: any[] }) => item.subTasks.filter(task => task.execStatus === '执行中').length > 0
     );
-    console.log(1111, lines);
     lines.length > 0 && execLines(lines);
     // 飞机的实时位置
     if (air && air?.length > 0) {
@@ -467,7 +500,6 @@ const Map: React.ForwardRefRenderFunction<
       if (!points) {
         return;
       }
-      console.log('points', points);
       // 判断第一个坐标和最后一个坐标是否相同，如果相同最后一个坐标圆点将不渲染
       const isLoop =
         points[0]?.coordinate?.lon === points[points?.length - 1]?.coordinate?.lon &&
@@ -678,6 +710,7 @@ const Map: React.ForwardRefRenderFunction<
     initLand: (regionArr: any, pointArray: any) => initLand(regionArr, pointArray),
     highlightLandsByIds: (landIds: any) => highlightLandsByIds(landIds),
     resetLand: id => resetLand(id),
+    resetAllLands: () => resetAllLands(),
     initRobot: info => initRobot(info)
   }));
 

@@ -75,7 +75,7 @@ export default function AddWorkOrder( ) {
   const [currentPageData, setCurrentPageData] = useState<Land.Item[]>([]);
 
 
-    const handleColumns = useCallback((simple: boolean) => {
+  const handleColumns = useCallback((simple: boolean) => {
     if (simple) {
       return [
         {
@@ -287,6 +287,28 @@ export default function AddWorkOrder( ) {
 
   const handleLandClick = (land: any) => {
     console.log('用户点击了地块:', land.landName, land.landId);
+    
+    setLandData(prev => {
+      const isExist = prev.some(item => item.landId === land.landId);
+      
+      if (isExist) {
+        message.warning('该组串已存在');
+        return prev;
+      }
+      
+      const newLandData = [...prev, {
+        ...land,
+        sort: prev.length
+      }];
+      
+      const newMap = { ...selectedRecordsMap };
+      newMap[land.landId] = land;
+      setSelectedRecordsMap(newMap);
+      
+      message.success(`已添加组串：${land.landName}`);
+      
+      return newLandData;
+    });
   };
 
 
@@ -622,8 +644,16 @@ export default function AddWorkOrder( ) {
                 rowKey='sort'
                 dragSortKey='sort'
                 onDragSortEnd={handleDragSortEnd}
-                style={{ width: '90%' }}
+                style={{ width: '90%', maxHeight: 200 }}
                 pagination={false}
+                scroll={{ y: 200 }}
+                size="small"
+                options={{
+                  fullScreen: false,
+                  reload: false,
+                  setting: false,
+                  density: false,
+                }}
               />
               <Button
                 style={{ width: '90%', marginTop: '12px' }}
@@ -808,13 +838,22 @@ export default function AddWorkOrder( ) {
                   已选 {selectedRowKeys.length} 项
 
                   <Button type="primary" style={{ marginInlineStart: 8 }} onClick={() => {
-                      setLandData(Object.values(selectedRecordsMap).map((item, index) => ({ ...item, sort: index}))); // 使用全局选中数据
+                      const newLandData = Object.values(selectedRecordsMap).map((item, index) => ({ ...item, sort: index})); // 使用全局选中数据
+                      
+                      // 找出被取消勾选的地块
+                      const removedLands = landData.filter(item => !selectedRecordsMap[item.landId]);
+                      
+                      // 重置被取消勾选的地块
+                      removedLands.forEach(land => {
+                        mapRef.current?.resetLand(land.landId.toString());
+                      });
+                      
+                      setLandData(newLandData);
                       setOpen(false);
                   }}>
                     确认
                   </Button>
                   <Button style={{ marginInlineStart: 8 }} onClick={() => {
-                    // setLandData([])
                     setSelect([])
                     onCleanSelected()
                   }}>
