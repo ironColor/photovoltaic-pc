@@ -118,7 +118,7 @@ export const workOrderExcuteQuery = async (params: any) => {
 }
 
 export const workOrderExcute = async (params: any) => {
-  return request<API.R<any>>('/ppc/workOrder/monitor/execute', {
+  return request<API.R<any>>('/ppc/workOrder/monitor/execute2', {
     method: 'GET',
     params: params,
   });

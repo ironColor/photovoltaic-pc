@@ -516,42 +516,52 @@ export default function ExecuteWork() {
   return (
     <Card
       bordered={false}
-      title='执行工单'
       extra={
-        <Space>
+        <div style={{ 
+          width: '100%', 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginInlineStart: 0 
+        }}>
           <Display count={info.rtkCount} status={info.rtkStatus} voltage={info.voltage} voltage133={voltage} />
-          <Button
-            type={'primary'}
-            style={{ backgroundColor: '#13c2c2' }}
-            onClick={() => command(20)}
-          >
-            自检
-          </Button>
-          <Button type={'primary'} onClick={onStart}>
-            启动
-          </Button>
-          <Button type='primary' danger onClick={() => command(22)}  >
-            急停
-          </Button>
-          <Button type='primary' danger onClick={cancel}>
-            取消
-          </Button>
-          <Button onClick={() => history.back()}>返回</Button>
-        </Space>
-      }
-      >
-        <Row gutter={16}>
-          <Col flex='450px'>
-            <div
-              style={{ height: '72vh', overflowY: 'auto' }}
+          <Space>
+            <Button
+              type={'primary'}
+              style={{ backgroundColor: '#13c2c2' }}
+              onClick={() => command(20)}
             >
-              <Timeline
-                style={{ padding: '24px 0', width: '380px', height: '72vh', overflowY: 'auto' }}
-                items={timeLine}
-              />
-            </div>
-          </Col>
-          <Col flex='auto'>
+              自检
+            </Button>
+            <Button type={'primary'} onClick={onStart}>
+              启动
+            </Button>
+            <Button type='primary' danger onClick={() => command(22)}  >
+              急停
+            </Button>
+            <Button type='primary' danger onClick={cancel}>
+              取消
+            </Button>
+            <Button onClick={() => history.back()}>返回</Button>
+          </Space>
+        </div>
+      }
+    >
+      <Row gutter={16} style={{ flexDirection: 'column' }}>
+        <Col style={{ width: '100%' }}>
+          <div style={{ marginBottom: '16px' }}>
+            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>执行工单</h2>
+          </div>
+          <div
+            style={{ height: '300px', overflowY: 'auto', borderBottom: '1px solid #f0f0f0' }}
+          >
+            <Timeline
+              style={{ padding: '24px 0', width: '100%', height: '300px', overflowY: 'auto' }}
+              items={timeLine}
+            />
+          </div>
+        </Col>
+          <Col style={{ width: '100%', marginTop: '16px' }}>
             <div>
               <Space className={styles.operation}>
                 <OperationButton label='校准缓降器' icon={p3} onClick={() => command(27)} />
@@ -575,7 +585,7 @@ export default function ExecuteWork() {
                 <Block type='none' color='#1677ff' title='已完成' />
                 <Block type='none' color='#bfbfbf' title='未完成' />
               </div>
-              <Map styles={{ height: 'calc(100vh - 190px)' }} complete={setComplete} ref={mapRef} />
+              <Map styles={{ height: 'calc(100vh - 550px)', minHeight: '400px' }} complete={setComplete} ref={mapRef} />
             </div>
           </Col>
         </Row>
