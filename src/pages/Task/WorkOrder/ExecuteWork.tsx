@@ -61,6 +61,24 @@ function mergeData(data) {
   return result;
 }
 
+function addUniqueId(data: any[]) {
+  return data.map((item, index) => {
+    if (item.subTasks && Array.isArray(item.subTasks)) {
+      return {
+        ...item,
+        subTasks: item.subTasks.map((subTask: any, subIndex: number) => ({
+          ...subTask,
+          _id: subTask.subtaskLogId || `temp_${index}_${subIndex}_${Date.now()}`
+        }))
+      };
+    }
+    return {
+      ...item,
+      _id: item.subtaskLogId || `temp_${index}_${Date.now()}`
+    };
+  });
+}
+
 export default function ExecuteWork() {
   let mapRef = React.createRef<{ execute?: (position: any[], air?: [number, number]) => void }>();
   const [complete, setComplete] = useState(false);
@@ -255,7 +273,7 @@ export default function ExecuteWork() {
           message.error(msg || '获取失败');
           return;
         }
-        setDataArr(data.formLists);
+        setDataArr(addUniqueId(data.formLists));
         const land = mergeData(data);
         setLandInfos(land);
         updateMap && (window as any).mapRef(land);
@@ -270,7 +288,7 @@ export default function ExecuteWork() {
 
         const land = mergeData(data);
 
-        setDataArr(land);
+        setDataArr(addUniqueId(data.formLists));
         updateMap && (window as any).mapRef(land);
       })
     }
@@ -381,7 +399,7 @@ export default function ExecuteWork() {
     }
 
     const subTaskIds = dataArr
-      .filter((record: any) => selectedRowKeys.includes(record.subtaskLogId))
+      .filter((record: any) => selectedRowKeys.includes(record._id))
       .map((record: any) => record.subtaskId);
 
     const { code, msg } = await commandApi({ commandCode: c, workOrderId: Number(orderId), subTaskIds: subTaskIds.join(',') || '' });
@@ -408,7 +426,7 @@ export default function ExecuteWork() {
     }
 
     const item = dataArr
-      .filter((record: any) => record.subtaskLogId === selectedRowKeys[0]);
+      .filter((record: any) => record._id === selectedRowKeys[0]);
 
     if (item[0].execStatus !== '执行中') {
       message.error('工单状态必须是执行中');
@@ -416,7 +434,7 @@ export default function ExecuteWork() {
     }
 
     const subTaskIds = dataArr
-      .filter((record: any) => selectedRowKeys.includes(record.subtaskLogId))
+      .filter((record: any) => selectedRowKeys.includes(record._id))
       .map((record: any) => record.subtaskId);
 
     const { code, msg } = await commandApi({ commandCode: c, workOrderId: Number(orderId), subTaskId: subTaskIds[0] });
@@ -433,7 +451,7 @@ export default function ExecuteWork() {
     const orderId = searchParams.get('id');
 
     const subTaskIds = dataArr
-      .filter((record: any) => selectedRowKeys.includes(record.subtaskLogId))
+      .filter((record: any) => selectedRowKeys.includes(record._id))
       .map((record: any) => record.subtaskId);
     const { code, msg } = await commandApi({ commandCode: c, workOrderId: Number(orderId), subTaskId: subTaskIds[0] });
     if (code !== 0) {
@@ -497,13 +515,14 @@ export default function ExecuteWork() {
         message.error(msg || '获取失败');
         return;
       }
-      setDataArr(data.formLists);
+      const dataWithId = addUniqueId(data.formLists);
+      setDataArr(dataWithId);
       const land = mergeData(data);
       setLandInfos(land);
       setOrderLogId(data.formLists[0].orderLogId);
       
       // 默认选择第一个可勾选的工单
-      const firstSelectable = data.formLists.find((record: any) => {
+      const firstSelectable = dataWithId.find((record: any) => {
         const taskType = record.taskType;
         const execStatus = record.execStatus;
         const isExecutable = taskType === 2 && (execStatus === '待执行' || execStatus === '中断' || execStatus === '执行中');
@@ -512,7 +531,7 @@ export default function ExecuteWork() {
       });
       
       if (firstSelectable) {
-        setSelectedRowKeys([firstSelectable.subtaskLogId]);
+        setSelectedRowKeys([firstSelectable._id]);
       }
       // (window as any).mapRef(data?.landInfos);
     })
