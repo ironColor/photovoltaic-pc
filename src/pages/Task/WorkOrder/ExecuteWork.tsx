@@ -570,7 +570,7 @@ export default function ExecuteWork() {
     }
 
     if (selectedRowKeys.length === 1) {
-      const record = dataArr.find((record: any) => record.subtaskLogId === selectedRowKeys[0]);
+      const record = dataArr.find((record: any) => record._id === selectedRowKeys[0]);
       if (record.task === 2 || record.task === 4) {
         const text = `执行任务${record.taskName}，机器人${record.robotCode}${taskType[record.taskType]}至${record.landName}`
         speak(text)
@@ -584,7 +584,7 @@ export default function ExecuteWork() {
         command(21);
       }
     } else if (selectedRowKeys.length > 1) {
-      const selectedRecords = dataArr.filter((record: any) => selectedRowKeys.includes(record.subtaskLogId));
+      const selectedRecords = dataArr.filter((record: any) => selectedRowKeys.includes(record._id));
       const taskNames = selectedRecords.map((record: any) => record.taskName).join('、');
       const text = `确认执行以下任务：${taskNames}`;
 
@@ -624,7 +624,7 @@ export default function ExecuteWork() {
 
 
     const subTaskIds = dataArr
-      .filter((record: any) => selectedRowKeys.includes(record.subtaskLogId))
+      .filter((record: any) => selectedRowKeys.includes(record._id))
       .map((record: any) => record.subtaskId);
 
     const { code, msg } = await commandApi({ commandCode: 124, robotCode: c, workOrderId: Number(orderId), subTaskIds: subTaskIds.join(',') });
@@ -679,7 +679,7 @@ export default function ExecuteWork() {
           <Table
             columns={columns}
             dataSource={dataArr}
-            rowKey="subtaskLogId"
+            rowKey="_id"
             rowSelection={{
               selectedRowKeys,
               onChange: (keys) => setSelectedRowKeys(keys),
