@@ -480,7 +480,7 @@ const Map: React.ForwardRefRenderFunction<
     });
 
     const lines: any = position?.filter(
-      (item: { execStatus: string, subTasks: any[] }) => item.subTasks.filter(task => task.execStatus === '执行中').length > 0
+      (item: { execStatus: string, subTasks: any[] }) => item.subTasks?.filter(task => task.execStatus === '执行中').length > 0
     );
     lines.length > 0 && execLines(lines);
     // 飞机的实时位置
@@ -496,7 +496,7 @@ const Map: React.ForwardRefRenderFunction<
 
   const execLines = (lines: any[] = []) => {
     lines.map(line => {
-      const points = line.commandTaskLogs || line.subTasks.filter(item => item.execStatus === '执行中')[0].commandTasks;
+      const points = line.commandTaskLogs || line.subTasks?.filter(item => item.execStatus === '执行中')[0].commandTasks;
       if (!points) {
         return;
       }
