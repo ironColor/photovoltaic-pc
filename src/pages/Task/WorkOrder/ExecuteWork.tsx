@@ -429,6 +429,23 @@ export default function ExecuteWork() {
   }, [subTaskId, mapRef.current, selectedRowKeys, dataArr]);
 
 
+  const commandCancel = useCallback(async (c: number) => {
+    const orderId = searchParams.get('id');
+
+    const subTaskIds = dataArr
+      .filter((record: any) => selectedRowKeys.includes(record.subtaskLogId))
+      .map((record: any) => record.subtaskId);
+    const { code, msg } = await commandApi({ commandCode: c, workOrderId: Number(orderId), subTaskId: subTaskIds[0] });
+    if (code !== 0) {
+      message.error(msg || '执行失败');
+      return null;
+    }
+    call();
+    message.success('消息已发出');
+  }, [subTaskId, mapRef.current, selectedRowKeys, dataArr]);
+
+
+
   const speak = (text: any) => {
     const utterance = new SpeechSynthesisUtterance(text.replace(/(\d+)-(\d+)-(\d+)/g, '$1杠$2杠$3'));
     utterance.lang = 'zh-CN';
@@ -446,11 +463,11 @@ export default function ExecuteWork() {
       title: '确定要取消当前任务吗？',
       icon: <ExclamationCircleFilled />,
       onOk() {
-        command(24);
+        commandCancel(24);
         // history.go(0);
       }
     });
-  }, []);
+  }, [commandCancel]);
 
   const execStatusFc = useCallback((status: string, cleanEndTime?: string) => {
     const statusColors: Record<string, string> = {
@@ -472,12 +489,6 @@ export default function ExecuteWork() {
   }, []);
 
   useEffect(() => {
-    if (subTaskId) {
-      setColKey([subTaskId.toString()])
-    }
-  }, [subTaskId]);
-
-  useEffect(() => {
     const orderId = searchParams.get('id');
     workOrderExcute({ orderId }).then(res => {
       const { code, msg, data } = res;
@@ -490,6 +501,19 @@ export default function ExecuteWork() {
       const land = mergeData(data);
       setLandInfos(land);
       setOrderLogId(data.formLists[0].orderLogId);
+      
+      // 默认选择第一个可勾选的工单
+      const firstSelectable = data.formLists.find((record: any) => {
+        const taskType = record.taskType;
+        const execStatus = record.execStatus;
+        const isExecutable = taskType === 2 && (execStatus === '待执行' || execStatus === '中断' || execStatus === '执行中');
+        const isTransferRecycle = (taskType === 3 || taskType === 4) && (execStatus === '可执行' || execStatus === '中断' || execStatus === '执行中');
+        return isExecutable || isTransferRecycle;
+      });
+      
+      if (firstSelectable) {
+        setSelectedRowKeys([firstSelectable.subtaskLogId]);
+      }
       // (window as any).mapRef(data?.landInfos);
     })
   }, [searchParams]);
