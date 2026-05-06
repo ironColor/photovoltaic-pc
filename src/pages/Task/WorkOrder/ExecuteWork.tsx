@@ -255,22 +255,10 @@ export default function ExecuteWork() {
           message.error(msg || '获取失败');
           return;
         }
-        const formatData = data?.landInfos?.map((item: any) => {
-          return {
-            ...item,
-            execStatus: item.subTasks[0]?.execStatus,
-            cleanEndTime: item.subTasks[0]?.cleanEndTime
-          }
-        })
-
-        setDataArr(formatData);
-        updateMap && (window as any).mapRef(data?.landInfos?.map((item: any) => {
-          return {
-            ...item,
-            execStatus: item.landRenderingStatus,
-            cleanEndTime: item.subTasks[0]?.cleanEndTime
-          }
-        }));
+        setDataArr(data.formLists);
+        const land = mergeData(data);
+        setLandInfos(land);
+        updateMap && (window as any).mapRef(land);
       })
     } else {
       workOrderExcute({ orderId }).then(res => {
@@ -392,15 +380,53 @@ export default function ExecuteWork() {
       return null;
     }
 
-    const { code, msg } = await commandApi({ commandCode: c, workOrderId: Number(orderId), subTaskIds: selectedRowKeys });
+    const subTaskIds = dataArr
+      .filter((record: any) => selectedRowKeys.includes(record.subtaskLogId))
+      .map((record: any) => record.subtaskId);
+
+    const { code, msg } = await commandApi({ commandCode: c, workOrderId: Number(orderId), subTaskIds: subTaskIds.join(',') || '' });
     if (code !== 0) {
       message.error(msg || '执行失败');
       return null;
     }
-    // 刷新列表
     call();
     message.success('消息已发出');
-  }, [subTaskId, mapRef.current]);
+  }, [subTaskId, mapRef.current, selectedRowKeys, dataArr]);
+
+
+  const commandStop = useCallback(async (c: number) => {
+    const orderId = searchParams.get('id');
+
+    if (selectedRowKeys.length === 0) {
+      message.error('请选择执行工单');
+      return null;
+    }
+
+    if (selectedRowKeys.length > 1) {
+      message.error('急停只允许选择一个工单');
+      return null;
+    }
+
+    const item = dataArr
+      .filter((record: any) => record.subtaskLogId === selectedRowKeys[0]);
+
+    if (item[0].execStatus !== '执行中') {
+      message.error('工单状态必须是执行中');
+      return null;
+    }
+
+    const subTaskIds = dataArr
+      .filter((record: any) => selectedRowKeys.includes(record.subtaskLogId))
+      .map((record: any) => record.subtaskId);
+
+    const { code, msg } = await commandApi({ commandCode: c, workOrderId: Number(orderId), subTaskId: subTaskIds[0] });
+    if (code !== 0) {
+      message.error(msg || '执行失败');
+      return null;
+    }
+    call();
+    message.success('消息已发出');
+  }, [subTaskId, mapRef.current, selectedRowKeys, dataArr]);
 
 
   const speak = (text: any) => {
@@ -463,7 +489,8 @@ export default function ExecuteWork() {
       setDataArr(data.formLists);
       const land = mergeData(data);
       setLandInfos(land);
-      (window as any).mapRef(data?.landInfos);
+      setOrderLogId(data.formLists[0].orderLogId);
+      // (window as any).mapRef(data?.landInfos);
     })
   }, [searchParams]);
 
@@ -552,7 +579,12 @@ export default function ExecuteWork() {
       return;
     }
 
-    const { code, msg } = await commandApi({ commandCode: 124, robotCode: c, workOrderId: Number(orderId), subTaskIds: selectedRowKeys.join(',') });
+
+    const subTaskIds = dataArr
+      .filter((record: any) => selectedRowKeys.includes(record.subtaskLogId))
+      .map((record: any) => record.subtaskId);
+
+    const { code, msg } = await commandApi({ commandCode: 124, robotCode: c, workOrderId: Number(orderId), subTaskIds: subTaskIds.join(',') });
     if (code !== 0) {
       message.error(msg || '工作结束失败');
       return;
@@ -585,7 +617,7 @@ export default function ExecuteWork() {
             <Button type={'primary'} onClick={onStart}>
               启动
             </Button>
-            <Button type='primary' danger onClick={() => command(22)}  >
+            <Button type='primary' danger onClick={() => commandStop(22)}  >
               急停
             </Button>
             <Button type='primary' danger onClick={cancel}>
@@ -604,7 +636,7 @@ export default function ExecuteWork() {
           <Table
             columns={columns}
             dataSource={dataArr}
-            rowKey="subTaskId"
+            rowKey="subtaskLogId"
             rowSelection={{
               selectedRowKeys,
               onChange: (keys) => setSelectedRowKeys(keys),
@@ -613,11 +645,10 @@ export default function ExecuteWork() {
                 const execStatus = record.execStatus;
                 
                 // 任务类型为投放（taskType为2）执行状态为待执行、中断
-                const isExecutable = taskType === 2 && (execStatus === '待执行' || execStatus === '中断');
+                const isExecutable = taskType === 2 && (execStatus === '待执行' || execStatus === '中断' || execStatus === '执行中');
                 
                 // 任务类型为转移、回收（taskType为3、4）执行状态为可执行、中断
-                const isTransferRecycle = (taskType === 3 || taskType === 4) && (execStatus === '可执行' || execStatus === '中断');
-                
+                const isTransferRecycle = (taskType === 3 || taskType === 4) && (execStatus === '可执行' || execStatus === '中断' || execStatus === '执行中');
                 return {
                   disabled: !isExecutable && !isTransferRecycle,
                 };
