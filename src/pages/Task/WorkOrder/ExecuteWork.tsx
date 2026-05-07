@@ -33,7 +33,6 @@ import reset from '/public/picture/reset.png';
 import close from '/public/picture/close.png'
 import Block from '@/pages/Task/Monitor/components/Block';
 import Display from '@/pages/Task/Monitor/components/Display';
-import { useEmotionCss } from '@ant-design/use-emotion-css';
 
 
 function mergeData(data) {
@@ -175,7 +174,8 @@ export default function ExecuteWork() {
                     width: '8px',
                     height: '8px',
                     borderRadius: '50%',
-                    backgroundColor: execStatusFc(cmd.execStatus, cmd.cleanEndTime),
+                    border: '2px solid ' + execStatusFc(cmd.execStatus, cmd.cleanEndTime),
+                    backgroundColor: 'transparent',
                     flexShrink: 0
                   }}
                 />
@@ -262,9 +262,20 @@ export default function ExecuteWork() {
           message.error(msg || '获取失败');
           return;
         }
-        setDataArr(addUniqueId(data.formLists));
+        const dataWithId = addUniqueId(data.formLists);
+        setDataArr(dataWithId);
         const land = mergeData(data);
         setLandInfos(land);
+        
+        const firstSelectable = dataWithId.find((record: any) => {
+          const taskType = record.taskType;
+          const execStatus = record.execStatus;
+          const isExecutable = taskType === 2 && (execStatus === '待执行' || execStatus === '中断' || execStatus === '执行中');
+          const isTransferRecycle = (taskType === 3 || taskType === 4) && (execStatus === '可执行' || execStatus === '中断' || execStatus === '执行中');
+          return isExecutable || isTransferRecycle;
+        });
+        setSelectedRowKeys(firstSelectable ? [firstSelectable._id] : []);
+        
         updateMap && (window as any).mapRef(land);
       })
     } else {
@@ -277,7 +288,18 @@ export default function ExecuteWork() {
 
         const land = mergeData(data);
         setLandInfos(land);
-        setDataArr(addUniqueId(data.formLists));
+        const dataWithId = addUniqueId(data.formLists);
+        setDataArr(dataWithId);
+        
+        const firstSelectable = dataWithId.find((record: any) => {
+          const taskType = record.taskType;
+          const execStatus = record.execStatus;
+          const isExecutable = taskType === 2 && (execStatus === '待执行' || execStatus === '中断' || execStatus === '执行中');
+          const isTransferRecycle = (taskType === 3 || taskType === 4) && (execStatus === '可执行' || execStatus === '中断' || execStatus === '执行中');
+          return isExecutable || isTransferRecycle;
+        });
+        setSelectedRowKeys(firstSelectable ? [firstSelectable._id] : []);
+        
         updateMap && (window as any).mapRef(land);
       })
     }
