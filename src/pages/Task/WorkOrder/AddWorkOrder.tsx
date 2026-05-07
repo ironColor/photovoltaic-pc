@@ -590,7 +590,7 @@ export default function AddWorkOrder( ) {
   }, [landName, orderType, landData]);
 
   useEffect(() => {
-    setSelect(landData)
+    setSelect(Object.values(selectedRecordsMap))
   }, [open])
 
   return (

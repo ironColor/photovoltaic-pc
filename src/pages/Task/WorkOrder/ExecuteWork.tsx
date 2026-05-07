@@ -83,22 +83,11 @@ export default function ExecuteWork() {
   let mapRef = React.createRef<{ execute?: (position: any[], air?: [number, number]) => void }>();
   const [complete, setComplete] = useState(false);
   const [dataArr, setDataArr] = useState<any[]>([]);
-  const [colKey, setColKey] = useState<any[]>([]);
   const [subTaskId, setSubTaskId] = useState<string>();
   const [searchParams] = useSearchParams();
   const [orderLogId, setOrderLogId] = useState();
-  const [text, setText] = useState<string>();
   // 设备信息
   const [info, setInfo] = useState<any>({});
-  // 任务类型
-  const [task, setTask] = useState<number>();
-  const [timeLine, setTimeline] = useState<any>();
-  const lineItemStyle = useEmotionCss(() => ({
-    '.ant-timeline-item-last': {
-      'padding-bottom': '0',
-      'margin-bottom': '-24px'
-    }
-  }));
   // 机器人电压
   const [robotVoltages, setRobotVoltages] = useState<{ [key: string]: number[] }>({});
   // ws 133的锁闩电压
@@ -247,7 +236,7 @@ export default function ExecuteWork() {
                 dataArr[
                   dataArr.findIndex((task: any) => task.execStatus === '执行中')
                   ].execStatus = '已完成';
-                (window as any).mapRef(dataArr);
+                (window as any).mapRef(landInfos);
               }}
             />
           </div>
@@ -287,7 +276,7 @@ export default function ExecuteWork() {
         }
 
         const land = mergeData(data);
-
+        setLandInfos(land);
         setDataArr(addUniqueId(data.formLists));
         updateMap && (window as any).mapRef(land);
       })
@@ -316,8 +305,9 @@ export default function ExecuteWork() {
       console.log('WebSocket通讯收到消息：', data);
 
       if (data.commandCode === 30) {
+        // 接口调整后 用landInfos而不是dataArr
         // 飞机实时位置
-        (window as any).mapRef(dataArr, [data.lon, data.lat]);
+        (window as any).mapRef(landInfos, [data.lon, data.lat]);
         // 更新卫星数、RTK状态、电压等
         setInfo(data);
       } else if (data.commandCode === 31) {
@@ -617,17 +607,7 @@ export default function ExecuteWork() {
   const stop = async (c: string) => {
     const orderId = searchParams.get('id');
 
-    if (selectedRowKeys.length === 0) {
-      message.error('请选择执行工单');
-      return;
-    }
-
-
-    const subTaskIds = dataArr
-      .filter((record: any) => selectedRowKeys.includes(record._id))
-      .map((record: any) => record.subtaskId);
-
-    const { code, msg } = await commandApi({ commandCode: 124, robotCode: c, workOrderId: Number(orderId), subTaskIds: subTaskIds.join(',') });
+    const { code, msg } = await commandApi({ commandCode: 124, robotCode: c, workOrderId: Number(orderId) });
     if (code !== 0) {
       message.error(msg || '工作结束失败');
       return;
