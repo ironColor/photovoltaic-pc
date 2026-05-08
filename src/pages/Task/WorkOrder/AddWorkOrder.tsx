@@ -71,10 +71,7 @@ export default function AddWorkOrder( ) {
   const [all, setAll] = useState<any[]>([]);
   // 用于储存当前选中的
   const [select, setSelect] = useState<any[]>([]);
-
   const [currentPageData, setCurrentPageData] = useState<Land.Item[]>([]);
-
-
   const handleColumns = useCallback((simple: boolean) => {
     if (simple) {
       return [
@@ -423,8 +420,6 @@ export default function AddWorkOrder( ) {
           robotIds: detailData.robotIds,
           safeHeight: detailData.safeHeight
         });
-
-
 
         // 设置areaID 用于添加地块时，接口获取对应场地下的地块信息
         setLandId(detailData.areaId);
@@ -795,53 +790,23 @@ export default function AddWorkOrder( ) {
               rowSelection={{
                 selectedRowKeys: select.map(item => item.landId),
                 onChange: (keys, rows) => {
-                  //   console.log(111, keys, select, selectedRecordsMap, page);
-                  // const newMap = { ...selectedRecordsMap };
-                  //
-                  // // 只做一件事：补充当前页选中的 row
-                  // rows.forEach(row => {
-                  //   row.page = page
-                  //   newMap[row.landId] = row;
-                  // });
-                  // setSelectedRecordsMap(newMap);
-                  // // // 同步 landData（按 selectedRowKeys 顺序）
-                  // //   const newData = [...Object.values(newMap), ...rows]
-                  // const newData = Object.values(newMap)
-                  //   .map((item, i) => {
-                  //     if (item.page !== page) {
-                  //       return { ...item, sort: i  }
-                  //     } else {
-                  //       // 是当前页的 则要通过keys来判断
-                  //       if (keys.includes(item.landId)) {
-                  //         return { ...item, sort: i  }
-                  //       }
-                  //     }
-                  //   }).filter(item => item !== undefined);
-                  // setSelect(newData);
-
-                  // setLandData(newData);
                     const newMap = { ...selectedRecordsMap };
-
                     // 获取当前页所有 landId
                     const currentPageIds = currentPageData.map(item => item.landId);
-
                     // 1. 移除当前页中未被选中的项
                     currentPageIds.forEach(id => {
                         if (!keys.includes(id)) {
                             delete newMap[id];
                         }
                     });
-
                     // 2. 添加当前页中新选中的项
                     rows.forEach(row => {
                         newMap[row.landId] = row;
                     });
-
                     setSelectedRecordsMap(newMap);
                     setSelect(Object.values(newMap));
-
                 },
-                selections: [Table.SELECTION_INVERT], // 移除全选，避免误导
+                selections: [Table.SELECTION_INVERT],
                 getCheckboxProps: (record) => ({
                   disabled: isSlopeTooLarge(record)
                 })

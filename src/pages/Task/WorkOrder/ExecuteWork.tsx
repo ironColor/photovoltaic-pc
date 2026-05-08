@@ -82,7 +82,6 @@ export default function ExecuteWork() {
   let mapRef = React.createRef<{ execute?: (position: any[], air?: [number, number]) => void }>();
   const [complete, setComplete] = useState(false);
   const [dataArr, setDataArr] = useState<any[]>([]);
-  const [subTaskId, setSubTaskId] = useState<string>();
   const [searchParams] = useSearchParams();
   const [orderLogId, setOrderLogId] = useState();
   // 设备信息
@@ -421,7 +420,7 @@ export default function ExecuteWork() {
     }
     call();
     message.success('消息已发出');
-  }, [subTaskId, mapRef.current, selectedRowKeys, dataArr]);
+  }, [mapRef.current, selectedRowKeys, dataArr]);
 
 
   const commandStop = useCallback(async (c: number) => {
@@ -456,7 +455,7 @@ export default function ExecuteWork() {
     }
     call();
     message.success('消息已发出');
-  }, [subTaskId, mapRef.current, selectedRowKeys, dataArr]);
+  }, [mapRef.current, selectedRowKeys, dataArr]);
 
 
   const commandCancel = useCallback(async (c: number) => {
@@ -472,7 +471,7 @@ export default function ExecuteWork() {
     }
     call();
     message.success('消息已发出');
-  }, [subTaskId, mapRef.current, selectedRowKeys, dataArr]);
+  }, [mapRef.current, selectedRowKeys, dataArr]);
 
 
 
