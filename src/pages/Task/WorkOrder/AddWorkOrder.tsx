@@ -289,7 +289,6 @@ export default function AddWorkOrder( ) {
       const isExist = prev.some(item => item.landId === land.landId);
       
       if (isExist) {
-        // 地块已存在，取消选中
         const newLandData = prev
           .filter(item => item.landId !== land.landId)
           .map((item, index) => ({
@@ -297,24 +296,15 @@ export default function AddWorkOrder( ) {
             sort: index
           }));
         
-        const newMap = { ...selectedRecordsMap };
-        delete newMap[land.landId];
-        setSelectedRecordsMap(newMap);
-        
         mapRef.current?.resetLand(land.landId.toString());
         message.success(`已取消组串：${land.landName}`);
         
         return newLandData;
       } else {
-        // 地块不存在，添加选中
         const newLandData = [...prev, {
           ...land,
           sort: prev.length
         }];
-        
-        const newMap = { ...selectedRecordsMap };
-        newMap[land.landId] = land;
-        setSelectedRecordsMap(newMap);
         
         message.success(`已添加组串：${land.landName}`);
         
@@ -585,8 +575,13 @@ export default function AddWorkOrder( ) {
   }, [landName, orderType, landData]);
 
   useEffect(() => {
-    setSelect(Object.values(selectedRecordsMap))
-  }, [open])
+    const newMap = {};
+    landData.forEach(item => {
+      newMap[item.landId] = item;
+    });
+    setSelectedRecordsMap(newMap);
+    setSelect(landData);
+  }, [landData]);
 
   return (
     <Row gutter={32} style={{ background: '#fff'}}>
