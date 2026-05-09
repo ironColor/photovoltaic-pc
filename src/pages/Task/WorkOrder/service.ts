@@ -155,3 +155,16 @@ export const getLandListAll = async (id: any) => {
     method: 'GET'
   });
 }
+
+export const getOptions = async () => {
+  return request<API.R<any>>(`/sysDictData/dictType?dictType=error_type`, {
+    method: 'GET'
+  });
+}
+
+export const saveOptions = async (data: any) => {
+  return request<API.R<any>>(`/ppc/workOrder/monitor/saveErrorCode`, {
+    method: 'POST',
+    data: data
+  });
+}

@@ -21,12 +21,6 @@ const Log: React.FC = () => {
       width: 270,
       ellipsis: true
     },
-    // {
-    //   title: '工单名称',
-    //   dataIndex: 'orderName',
-    //   width: 270,
-    //   ellipsis: true
-    // },
     {
       title: '工单类型',
       dataIndex: 'orderType',
@@ -45,6 +39,12 @@ const Log: React.FC = () => {
       title: '负责人',
       dataIndex: 'createName',
       search: false,
+    },
+    {
+      title: '工单名称',
+      dataIndex: 'orderName',
+      width: 120,
+      ellipsis: true
     },
     {
       title: '工作起始组串',

@@ -9,11 +9,18 @@ import {
   Statistic,
   Table,
   Tag,
+  Select
 } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from '@@/exports';
 import MapComponent from '@/pages/components/Map';
-import { commandApi, workOrderExcute, workOrderImmediate } from '@/pages/Task/WorkOrder/service';
+import {
+  commandApi,
+  getOptions,
+  saveOptions,
+  workOrderExcute,
+  workOrderImmediate
+} from '@/pages/Task/WorkOrder/service';
 import { useWebSocket } from 'ahooks';
 import { config } from '../../../../public/scripts/config';
 import { getCurrentUser } from '@/utils/authority';
@@ -33,6 +40,7 @@ import reset from '/public/picture/reset.png';
 import close from '/public/picture/close.png'
 import Block from '@/pages/Task/Monitor/components/Block';
 import Display from '@/pages/Task/Monitor/components/Display';
+import style from './excute.less';
 
 
 function mergeData(data) {
@@ -86,45 +94,63 @@ export default function ExecuteWork() {
   const [orderLogId, setOrderLogId] = useState();
   // 设备信息
   const [info, setInfo] = useState<any>({});
-  // 机器人电压
-  const [robotVoltages, setRobotVoltages] = useState<{ [key: string]: number[] }>({});
+  // // 机器人电压
+  // const [robotVoltages, setRobotVoltages] = useState<{ [key: string]: number[] }>({});
   // ws 133的锁闩电压
   const [voltage, setVlotage] = useState<number>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-
   const [landInfos, setLandInfos] = useState<any[]>();
+  const [options, setOptions] = useState<any[]>([]);
+
+
+  const optionsChange = (value: string, subTaskLogId: string) => {
+    saveOptions({ errorCode: value, subTaskLogId }).then(res => {
+      const { code, msg, data } = res;
+      if (code !== 0) {
+        message.error(msg || '获取失败');
+        return;
+      }
+      call();
+    })
+  }
+
 
   const columns = [
     {
       title: '地块名称',
       dataIndex: 'landName',
       key: 'landName',
-      width: 120,
+      align: 'center',
+      width: 100
     },
     {
       title: '任务名称',
       dataIndex: 'taskName',
       key: 'taskName',
-      width: 150,
+      align: 'center',
+      width: 120
     },
     {
       title: '任务类型',
       dataIndex: 'taskType',
       key: 'taskType',
-      width: 100,
       render: (task: number) => taskType[task] || '-',
+      align: 'center',
+      width: 100
     },
     {
       title: '执行无人机',
       dataIndex: 'uavCode',
       key: 'uavCode',
-      width: 100,
+      align: 'center',
+      width: 100
     },
     {
       title: '执行机器人',
       dataIndex: 'robotCode',
       key: 'robotCode',
-      width: 85,
+      align: 'center',
+      width: 120,
       render: (robotCode: string, record: any) => {
         if (!robotCode) return '-';
         return (
@@ -141,7 +167,8 @@ export default function ExecuteWork() {
       title: '机器人电量',
       dataIndex: 'robotCode',
       key: 'robotVoltage',
-      width: 90,
+      align: 'center',
+      width: 120,
       render: (_: string, record: any) => {
         if (!record.robotVoltage1 || !record.robotVoltage2) return '-';
         return (
@@ -155,11 +182,12 @@ export default function ExecuteWork() {
       title: '执行步骤',
       dataIndex: 'commandTasks',
       key: 'commandTasks',
-      width: 150,
+      align: 'center',
+      width: 220,
       render: (commandTasks: any[]) => {
         if (!commandTasks || commandTasks.length === 0) return '-';
         return (
-          <div style={{ display: 'flex', gap: '10' }}>
+          <div style={{ display: 'flex', gap: '10',  justifyContent: 'center' }}>
             {commandTasks.map((cmd: any, idx: number) => (
               <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', paddingBottom: '16px', marginRight: '10px' }}>
                 {/* 文字 */}
@@ -170,8 +198,8 @@ export default function ExecuteWork() {
                 {/* 圆点 */}
                 <div 
                   style={{
-                    width: '8px',
-                    height: '8px',
+                    width: '12px',
+                    height: '12px',
                     borderRadius: '50%',
                     border: '2px solid ' + execStatusFc(cmd.execStatus, cmd.cleanEndTime),
                     backgroundColor: 'transparent',
@@ -184,10 +212,10 @@ export default function ExecuteWork() {
                     style={{
                       position: 'absolute',
                       left: '110%',
-                      top: '3px',
+                      top: '6px',
                       transform: 'rotate(90deg)',
                       width: '2px',
-                      height: 'calc(100% + 1px)',
+                      height: 'calc(100% - 6px)',
                       backgroundColor: '#d9d9d9'
                     }}
                   />
@@ -202,7 +230,8 @@ export default function ExecuteWork() {
       title: '执行状态',
       dataIndex: 'execStatus',
       key: 'execStatus',
-      width: 100,
+      align: 'center',
+      width: 120,
       render: (status: string) => {
         const colorMap: Record<string, string> = {
           '待执行': 'default',
@@ -219,7 +248,8 @@ export default function ExecuteWork() {
       title: '清扫倒计时',
       dataIndex: 'countDownTime',
       key: 'countDownTime',
-      width: 80,
+      align: 'center',
+      width: 260,
       render: (countDownTime) => {
         if (!countDownTime) return '-';
 
@@ -247,7 +277,19 @@ export default function ExecuteWork() {
       title: '结果',
       dataIndex: 'errorCode',
       key: 'errorCode',
-      width: 50
+      align: 'center',
+      render: (_, record) => {
+        if (record.execStatus === '执行中' ||( record.execStatus === '已完成' && record.countDownTime)) {
+          return (
+            <Select style={{ width: '200px' }} options={options} onChange={value => optionsChange(value, record.subtaskLogId)}></Select>
+          )
+        }
+
+        if (!record.errorCode) return '-';
+
+
+        return record.errorCode !== '成功' ? `${record.errorCode}:${record.errorDetail}` : record.errorCode;
+      }
     },
   ];
 
@@ -372,10 +414,10 @@ export default function ExecuteWork() {
       } else if (data.commandCode === 120) {
         message.error('释放吸盘失败');
       } else if (data.commandCode === 123) {
-        setRobotVoltages(prev => ({
-          ...prev,
-          [data.robotCode]: [data.voltage1, data.voltage2] // 更新或新增机器人电压
-        }));
+        // setRobotVoltages(prev => ({
+        //   ...prev,
+        //   [data.robotCode]: [data.voltage1, data.voltage2] // 更新或新增机器人电压
+        // }));
         call(false);
       } else if (data.commandCode === 127) {
         message.error('机器人工作结束失败');
@@ -469,7 +511,30 @@ export default function ExecuteWork() {
       message.error(msg || '执行失败');
       return null;
     }
-    call();
+    // call();
+    workOrderExcute({ orderId }).then(res => {
+      const { code, msg, data } = res;
+      if (code !== 0) {
+        message.error(msg || '获取失败');
+        return;
+      }
+
+      const land = mergeData(data);
+      setLandInfos(land);
+      const dataWithId = addUniqueId(data.formLists);
+      setDataArr(dataWithId);
+
+      const firstSelectable = dataWithId.find((record: any) => {
+        const taskType = record.taskType;
+        const execStatus = record.execStatus;
+        const isExecutable = taskType === 2 && (execStatus === '待执行' || execStatus === '中断' || execStatus === '执行中');
+        const isTransferRecycle = (taskType === 3 || taskType === 4) && (execStatus === '可执行' || execStatus === '中断' || execStatus === '执行中');
+        return isExecutable || isTransferRecycle;
+      });
+      setSelectedRowKeys(firstSelectable ? [firstSelectable._id] : []);
+
+      (window as any).mapRef(land);
+    })
     message.success('消息已发出');
   }, [mapRef.current, selectedRowKeys, dataArr]);
 
@@ -519,6 +584,21 @@ export default function ExecuteWork() {
 
   useEffect(() => {
     const orderId = searchParams.get('id');
+    getOptions().then(res => {
+      const { code, msg, data } = res;
+
+      if (code !== 0) {
+        message.error(msg || '获取失败');
+        return;
+      }
+      const format = data.map(item => ({
+        ...item,
+        label: `${item.dictValue}:${item.dictLabel}`,
+        value: item.dictValue,
+      }));
+      console.log('xxxx', format);
+      setOptions(format);
+    })
     workOrderExcute({ orderId }).then(res => {
       const { code, msg, data } = res;
 
@@ -582,23 +662,21 @@ export default function ExecuteWork() {
 
     if (selectedRowKeys.length === 1) {
       const record = dataArr.find((record: any) => record._id === selectedRowKeys[0]);
-      if (record.task === 2 || record.task === 4) {
-        const text = `执行任务${record.taskName}，机器人${record.robotCode}${taskType[record.taskType]}至${record.landName}`
-        speak(text)
-        Modal.confirm({
-          title: text,
-          onOk() {
-            command(21);
-          }
-        });
-      } else {
-        command(21);
-      }
+      const text = `执行任务${record.taskName}，机器人${record.robotCode}${taskType[record.taskType]}至${record.landName}`
+      speak(text);
+      Modal.confirm({
+        title: text,
+        onOk() {
+          command(21);
+        }
+      });
     } else if (selectedRowKeys.length > 1) {
       const selectedRecords = dataArr.filter((record: any) => selectedRowKeys.includes(record._id));
       const taskNames = selectedRecords.map((record: any) => record.taskName).join('、');
       const text = `确认执行以下任务：${taskNames}`;
-
+      const record = dataArr.find((record: any) => record._id === selectedRowKeys[0]);
+      const textSpek = `执行任务${record.taskName}，机器人${record.robotCode}${taskType[record.taskType]}至${record.landName}`
+      speak(textSpek);
       Modal.confirm({
         title: text,
         content: (
@@ -640,6 +718,7 @@ export default function ExecuteWork() {
 
   return (
     <Card
+      className={style.head}
       bordered={false}
       extra={
         <div style={{
@@ -647,7 +726,12 @@ export default function ExecuteWork() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginInlineStart: 0
+          marginInlineStart: 0,
+          position: 'sticky',
+          top: 0,
+          zIndex: 100,
+          backgroundColor: '#fff',
+          padding: '12px 0'
         }}>
           <Display count={info.rtkCount} status={info.rtkStatus} voltage={info.voltage} voltage133={voltage} />
           <Space>
@@ -681,6 +765,7 @@ export default function ExecuteWork() {
             columns={columns}
             dataSource={dataArr}
             rowKey="_id"
+            tableLayout="auto"
             rowSelection={{
               selectedRowKeys,
               onChange: (keys) => setSelectedRowKeys(keys),
