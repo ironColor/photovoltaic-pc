@@ -202,8 +202,9 @@ export default function ExecuteWork() {
                     height: '12px',
                     borderRadius: '50%',
                     border: '2px solid ' + execStatusFc(cmd.execStatus, cmd.cleanEndTime),
-                    backgroundColor: 'transparent',
-                    flexShrink: 0
+                    backgroundColor: '#fff',
+                    flexShrink: 0,
+                    zIndex: 2
                   }}
                 />
                 {/* 连接线（除了最后一个） */}
@@ -212,10 +213,10 @@ export default function ExecuteWork() {
                     style={{
                       position: 'absolute',
                       left: '110%',
-                      top: '6px',
+                      top: '-1px',
                       transform: 'rotate(90deg)',
                       width: '2px',
-                      height: 'calc(100% - 6px)',
+                      height: 'calc(100% + 10px)',
                       backgroundColor: '#d9d9d9'
                     }}
                   />
@@ -249,7 +250,7 @@ export default function ExecuteWork() {
       dataIndex: 'countDownTime',
       key: 'countDownTime',
       align: 'center',
-      width: 260,
+      width: 200,
       render: (countDownTime) => {
         if (!countDownTime) return '-';
 
@@ -281,7 +282,13 @@ export default function ExecuteWork() {
       render: (_, record) => {
         if (record.execStatus === '执行中' ||( record.execStatus === '已完成' && record.countDownTime)) {
           return (
-            <Select style={{ width: '200px' }} options={options} onChange={value => optionsChange(value, record.subtaskLogId)}></Select>
+            <Select
+              style={{ width: '200px' }}
+              options={options}
+              onChange={value => optionsChange(value, record.subtaskLogId)}
+              placeholder="请选择失效类型"
+            >
+            </Select>
           )
         }
 
