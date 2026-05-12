@@ -121,14 +121,16 @@ export default function ExecuteWork() {
       dataIndex: 'landName',
       key: 'landName',
       align: 'center',
-      width: 100
+      width: 100,
+      fixed: 'left'
     },
     {
       title: '任务名称',
       dataIndex: 'taskName',
       key: 'taskName',
       align: 'center',
-      width: 120
+      width: 120,
+      fixed: 'left'
     },
     {
       title: '任务类型',
@@ -798,7 +800,7 @@ export default function ExecuteWork() {
               },
             }}
             pagination={false}
-            scroll={{ y: 300 }}
+            scroll={{ y: 300, x: 'max-content' }}
             size="small"
             bordered
           />
