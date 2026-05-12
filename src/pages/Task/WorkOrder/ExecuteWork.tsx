@@ -246,6 +246,13 @@ export default function ExecuteWork() {
       },
     },
     {
+      title: '机器人状态',
+      dataIndex: 'robotWorkStatus',
+      key: 'robotWorkStatus',
+      align: 'center',
+      width: 120,
+    },
+    {
       title: '清扫倒计时',
       dataIndex: 'countDownTime',
       key: 'countDownTime',
