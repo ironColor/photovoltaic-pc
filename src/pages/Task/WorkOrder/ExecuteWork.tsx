@@ -14,6 +14,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from '@@/exports';
 import MapComponent from '@/pages/components/Map';
+import { history } from '@umijs/max';
 import {
   commandApi,
   getOptions,
@@ -94,9 +95,6 @@ export default function ExecuteWork() {
   const [orderLogId, setOrderLogId] = useState();
   // 设备信息
   const [info, setInfo] = useState<any>({});
-  // // 机器人电压
-  // const [robotVoltages, setRobotVoltages] = useState<{ [key: string]: number[] }>({});
-  // ws 133的锁闩电压
   const [voltage, setVlotage] = useState<number>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [landInfos, setLandInfos] = useState<any[]>();
@@ -121,16 +119,14 @@ export default function ExecuteWork() {
       dataIndex: 'landName',
       key: 'landName',
       align: 'center',
-      width: 100,
-      fixed: 'left'
+      width: 100
     },
     {
       title: '任务名称',
       dataIndex: 'taskName',
       key: 'taskName',
       align: 'center',
-      width: 120,
-      fixed: 'left'
+      width: 120
     },
     {
       title: '任务类型',
@@ -253,6 +249,9 @@ export default function ExecuteWork() {
       key: 'robotWorkStatus',
       align: 'center',
       width: 120,
+      render: robotWorkStatus => {
+        return robotWorkStatus || '-'
+      }
     },
     {
       title: '清扫倒计时',
@@ -265,7 +264,6 @@ export default function ExecuteWork() {
 
         if (countDownTime > Date.now()) {
           return <div>
-            等待清扫：
             <Statistic.Countdown
               style={{ display: 'inline' }}
               valueStyle={{ display: 'inline', fontSize: 16 }}
@@ -324,14 +322,14 @@ export default function ExecuteWork() {
         const land = mergeData(data);
         setLandInfos(land);
         
-        const firstSelectable = dataWithId.find((record: any) => {
+        const allSelectable = dataWithId.filter((record: any) => {
           const taskType = record.taskType;
           const execStatus = record.execStatus;
           const isExecutable = taskType === 2 && (execStatus === '待执行' || execStatus === '中断' || execStatus === '执行中');
           const isTransferRecycle = (taskType === 3 || taskType === 4) && (execStatus === '可执行' || execStatus === '中断' || execStatus === '执行中');
           return isExecutable || isTransferRecycle;
         });
-        setSelectedRowKeys(firstSelectable ? [firstSelectable._id] : []);
+        setSelectedRowKeys(allSelectable.map((item: any) => item._id));
         
         updateMap && (window as any).mapRef(land);
       })
@@ -348,14 +346,14 @@ export default function ExecuteWork() {
         const dataWithId = addUniqueId(data.formLists);
         setDataArr(dataWithId);
         
-        const firstSelectable = dataWithId.find((record: any) => {
+        const allSelectable = dataWithId.filter((record: any) => {
           const taskType = record.taskType;
           const execStatus = record.execStatus;
           const isExecutable = taskType === 2 && (execStatus === '待执行' || execStatus === '中断' || execStatus === '执行中');
           const isTransferRecycle = (taskType === 3 || taskType === 4) && (execStatus === '可执行' || execStatus === '中断' || execStatus === '执行中');
           return isExecutable || isTransferRecycle;
         });
-        setSelectedRowKeys(firstSelectable ? [firstSelectable._id] : []);
+        setSelectedRowKeys(allSelectable.map((item: any) => item._id));
         
         updateMap && (window as any).mapRef(land);
       })
@@ -452,6 +450,8 @@ export default function ExecuteWork() {
         setVlotage(`${Math.floor(value / 3.8 * 100)} %`);
       } else if (data.commandCode === 135) {
         mapRef.current?.initRobot(data)
+      } else if (data.commandCode === 10) {
+        message.info(data.commandDesc);
       }
     },
     onError: event => {
@@ -540,14 +540,14 @@ export default function ExecuteWork() {
       const dataWithId = addUniqueId(data.formLists);
       setDataArr(dataWithId);
 
-      const firstSelectable = dataWithId.find((record: any) => {
+      const allSelectable = dataWithId.filter((record: any) => {
         const taskType = record.taskType;
         const execStatus = record.execStatus;
         const isExecutable = taskType === 2 && (execStatus === '待执行' || execStatus === '中断' || execStatus === '执行中');
         const isTransferRecycle = (taskType === 3 || taskType === 4) && (execStatus === '可执行' || execStatus === '中断' || execStatus === '执行中');
         return isExecutable || isTransferRecycle;
       });
-      setSelectedRowKeys(firstSelectable ? [firstSelectable._id] : []);
+      setSelectedRowKeys(allSelectable.map((item: any) => item._id));
 
       (window as any).mapRef(land);
     })
@@ -628,8 +628,8 @@ export default function ExecuteWork() {
       setLandInfos(land);
       setOrderLogId(data.formLists[0].orderLogId);
       
-      // 默认选择第一个可勾选的工单
-      const firstSelectable = dataWithId.find((record: any) => {
+      // 默认选择所有可勾选的工单
+      const allSelectable = dataWithId.filter((record: any) => {
         const taskType = record.taskType;
         const execStatus = record.execStatus;
         const isExecutable = taskType === 2 && (execStatus === '待执行' || execStatus === '中断' || execStatus === '执行中');
@@ -637,9 +637,7 @@ export default function ExecuteWork() {
         return isExecutable || isTransferRecycle;
       });
       
-      if (firstSelectable) {
-        setSelectedRowKeys([firstSelectable._id]);
-      }
+      setSelectedRowKeys(allSelectable.map((item: any) => item._id));
       // (window as any).mapRef(data?.landInfos);
     })
   }, [searchParams]);
@@ -735,6 +733,7 @@ export default function ExecuteWork() {
   return (
     <Card
       className={style.head}
+      title={"执行工单"}
       bordered={false}
       extra={
         <div style={{
@@ -767,16 +766,16 @@ export default function ExecuteWork() {
             <Button type='primary' danger onClick={cancel}>
               取消
             </Button>
-            <Button onClick={() => history.back()}>返回</Button>
+            <Button onClick={() => history.push({ pathname: '/task/workMonitor/list'})}>返回</Button>
           </Space>
         </div>
       }
     >
       <Row gutter={16} style={{ flexDirection: 'column' }}>
         <Col style={{ width: '100%' }}>
-          <div style={{ marginBottom: '16px' }}>
-            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>执行工单</h2>
-          </div>
+          {/*<div style={{ marginBottom: '16px' }}>*/}
+          {/*  <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>执行工单</h2>*/}
+          {/*</div>*/}
           <Table
             columns={columns}
             dataSource={dataArr}
@@ -800,7 +799,7 @@ export default function ExecuteWork() {
               },
             }}
             pagination={false}
-            scroll={{ y: 300, x: 'max-content' }}
+            scroll={{ y: 300 }}
             size="small"
             bordered
           />
