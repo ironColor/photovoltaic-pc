@@ -480,33 +480,14 @@ export default function ExecuteWork() {
     message.success('消息已发出');
   }, [mapRef.current, selectedRowKeys, dataArr]);
 
-
-  const commandStop = useCallback(async (c: number) => {
+  const mapCommand = useCallback(async (c: number) => {
     const orderId = searchParams.get('id');
-
-    if (selectedRowKeys.length === 0) {
-      message.error('请选择执行工单');
-      return null;
-    }
-
-    if (selectedRowKeys.length > 1) {
-      message.error('急停只允许选择一个工单');
-      return null;
-    }
-
-    const item = dataArr
-      .filter((record: any) => record._id === selectedRowKeys[0]);
-
-    if (item[0].execStatus !== '执行中') {
-      message.error('工单状态必须是执行中');
-      return null;
-    }
 
     const subTaskIds = dataArr
       .filter((record: any) => selectedRowKeys.includes(record._id))
       .map((record: any) => record.subtaskId);
 
-    const { code, msg } = await commandApi({ commandCode: c, workOrderId: Number(orderId), subTaskId: subTaskIds[0] });
+    const { code, msg } = await commandApi({ commandCode: c, workOrderId: Number(orderId), subTaskIds: subTaskIds.join(',') || '' });
     if (code !== 0) {
       message.error(msg || '执行失败');
       return null;
@@ -514,6 +495,25 @@ export default function ExecuteWork() {
     call();
     message.success('消息已发出');
   }, [mapRef.current, selectedRowKeys, dataArr]);
+
+  const commandStop = useCallback(async (c: number) => {
+    const orderId = searchParams.get('id');
+
+    const executingTask = dataArr.find((record: any) => record.execStatus === '执行中');
+
+    if (!executingTask) {
+      message.error('没有正在执行的工单');
+      return null;
+    }
+
+    const { code, msg } = await commandApi({ commandCode: c, workOrderId: Number(orderId), subTaskId: executingTask.subtaskId });
+    if (code !== 0) {
+      message.error(msg || '执行失败');
+      return null;
+    }
+    call();
+    message.success('消息已发出');
+  }, [mapRef.current, dataArr]);
 
 
   const commandCancel = useCallback(async (c: number) => {
@@ -612,7 +612,6 @@ export default function ExecuteWork() {
         label: `${item.dictValue}:${item.dictLabel}`,
         value: item.dictValue,
       }));
-      console.log('xxxx', format);
       setOptions(format);
     })
     workOrderExcute({ orderId }).then(res => {
@@ -799,7 +798,7 @@ export default function ExecuteWork() {
               },
             }}
             pagination={false}
-            scroll={{ y: 300 }}
+            scroll={{ y: 400 }}
             size="small"
             bordered
           />
@@ -807,15 +806,15 @@ export default function ExecuteWork() {
         <Col style={{ width: '100%', marginTop: '16px' }}>
           <div>
             <Space className={styles.operation}>
-              <OperationButton label='校准缓降器' icon={p3} onClick={() => command(27)} />
-              <OperationButton label='收绳' icon={p1} onClick={() => command(28)} />
-              <OperationButton label='放绳' icon={p2} onClick={() => command(29)} />
-              <OperationButton label='弹出锁闩' icon={p5} onClick={() => command(42)} />
-              <OperationButton label='缩回锁闩' icon={p4} onClick={() => command(41)} />
-              <OperationButton label='投球算法校准' icon={p6} onClick={() => command(43)} />
-              <OperationButton label='投球算法验证' icon={p7} onClick={() => command(44)} />
-              <OperationButton label='关机' icon={close} onClick={() => command(46)} />
-              <OperationButton label='重启' icon={reset} onClick={() => command(47)} />
+              <OperationButton label='校准缓降器' icon={p3} onClick={() => mapCommand(27)} />
+              <OperationButton label='收绳' icon={p1} onClick={() => mapCommand(28)} />
+              <OperationButton label='放绳' icon={p2} onClick={() => mapCommand(29)} />
+              <OperationButton label='弹出锁闩' icon={p5} onClick={() => mapCommand(42)} />
+              <OperationButton label='缩回锁闩' icon={p4} onClick={() => mapCommand(41)} />
+              <OperationButton label='投球算法校准' icon={p6} onClick={() => mapCommand(43)} />
+              <OperationButton label='投球算法验证' icon={p7} onClick={() => mapCommand(44)} />
+              <OperationButton label='关机' icon={close} onClick={() => mapCommand(46)} />
+              <OperationButton label='重启' icon={reset} onClick={() => mapCommand(47)} />
               {/*<OperationButton label='连续执行' icon={p8} onClick={() => {}} />*/}
             </Space>
             <div className={styles.sign}>
