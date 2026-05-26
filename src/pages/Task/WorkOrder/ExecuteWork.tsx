@@ -480,6 +480,23 @@ export default function ExecuteWork() {
     message.success('消息已发出');
   }, [mapRef.current, selectedRowKeys, dataArr]);
 
+
+  const commandWithoutSubTaskIds = useCallback(async (c: number) => {
+    const orderId = searchParams.get('id');
+
+    const subTaskIds = dataArr
+      .filter((record: any) => selectedRowKeys.includes(record._id))
+      .map((record: any) => record.subtaskId);
+
+    const { code, msg } = await commandApi({ commandCode: c, workOrderId: Number(orderId), subTaskIds: subTaskIds.join(',') || '' });
+    if (code !== 0) {
+      message.error(msg || '执行失败');
+      return null;
+    }
+    call();
+    message.success('消息已发出');
+  }, [mapRef.current, selectedRowKeys, dataArr]);
+
   const mapCommand = useCallback(async (c: number) => {
     const orderId = searchParams.get('id');
 
@@ -752,7 +769,7 @@ export default function ExecuteWork() {
             <Button
               type={'primary'}
               style={{ backgroundColor: '#13c2c2' }}
-              onClick={() => command(20)}
+              onClick={() => commandWithoutSubTaskIds(20)}
             >
               自检
             </Button>
