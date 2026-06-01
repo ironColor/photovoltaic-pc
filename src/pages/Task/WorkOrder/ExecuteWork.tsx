@@ -153,7 +153,7 @@ export default function ExecuteWork() {
         if (!robotCode) return '-';
         return (
           <div className={styles.code} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>机器人({robotCode}）</span>
+            <span>{ record.robotName || '机器人'}({robotCode}）</span>
             <div className={styles.closeIcon} onClick={() => stop(robotCode)} style={{ cursor: 'pointer', color: '#ff4d4f' }}>
               ×
             </div>
@@ -672,6 +672,7 @@ export default function ExecuteWork() {
       // execWS?.connect && execWS?.connect();
       // 执行地图数据初始化 地块展示时，状态要用landRenderingStatus
       mapRef.current?.execute?.(landInfos);
+
     }
 
     return () => {

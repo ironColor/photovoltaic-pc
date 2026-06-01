@@ -329,7 +329,7 @@ export default function AddWorkOrder( ) {
   const handleGroupChange = useCallback((value: any, option: any) => {
     setRobotOptions(option.robots.map((item: any) => ({
       ...item,
-      label: item.robotCode,
+      label: item.remarks ? `${item.remarks} (${item.robotCode})` : item.robotCode ,
       value: item.robotId
     })))
     // 选择机组后默认全部机器人
@@ -514,7 +514,7 @@ export default function AddWorkOrder( ) {
 
           const robotList = options.filter((item: any) => item.id === form.getFieldValue('uavConfigId'))[0]?.robots.map((item: any) => ({
             ...item,
-            label: item.robotCode,
+            label: item.remarks ? `${item.remarks} (${item.robotCode})` : item.robotCode ,
             value: item.robotId
           }))
           setRobotOptions(robotList)

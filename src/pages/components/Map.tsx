@@ -476,7 +476,31 @@ const Map: React.ForwardRefRenderFunction<
         strokeColor: borderColor(item.landRenderingStatus, 0),
         strokeWeight: item.taskType === 0 ? 3 : 0
       });
+
+
+      const center = overlay.getBounds().getCenter();
+
       map.current.add(overlay);
+
+      if (item.robotName) {
+        const text = new AMap.current.Text({
+          text: `${item.robotName} (${item.robotCode})`,
+          position: center,
+          anchor: 'center',
+          style: {
+            color: 'black',
+            fontSize: '10px',
+            fontWeight: 'bold',
+            background: 'transparent',
+            border: 'none',
+            textAlign: 'center',
+          },
+          zIndex: 200,
+          clickable: true
+        });
+        map.current.add(text);
+      }
+
     });
 
     const lines: any = position?.filter(
