@@ -1,7 +1,7 @@
 import type { ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
 import { del, detail, page } from './service';
-import { Button, Divider, message, Popconfirm, Space, Table, Tag } from 'antd';
+import { Button, Divider, message, Popconfirm, Space, Table } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import DataModal from './DataModal';
@@ -18,18 +18,18 @@ const Index = () => {
 
   const columns: ProColumns[] = [
     {
-      title: '编号',
+      title: '单元地址',
       dataIndex: 'robotCode',
-      width: 270,
+      // width: 270,
       ellipsis: true
     },
+    // {
+    //   title: 'RTK',
+    //   dataIndex: 'rtkCode',
+    //   ellipsis: true
+    // },
     {
-      title: 'RTK',
-      dataIndex: 'rtkCode',
-      ellipsis: true
-    },
-    {
-      title: '备注',
+      title: '机器人编号',
       dataIndex: 'remarks',
       search: false,
       ellipsis: true

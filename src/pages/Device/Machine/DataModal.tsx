@@ -50,31 +50,33 @@ export default ({
     >
       <ProForm.Group>
         <ProFormText
-          label='编号'
+          label='单元地址'
           name='robotCode'
-          tooltip='机器人编号'
+          tooltip='单元地址'
           width='md'
           placeholder='请输入1-255数字'
-          rules={[{ required: true, message: '请输入机器人编号' }]}
+          rules={[{ required: true, message: '请输入单元地址' }]}
           initialValue={data.robotCode}
           fieldProps={{ maxLength: 16 }}
         />
-        <ProFormTreeSelect
-          width='md'
-          name='rtkCode'
-          label='RTK'
-          initialValue={data.rtkCode}
-          request={async () => {
-            const { code, data, msg } = await list();
-            return data.map((item: any) => ({
-              title: item.rtkCode,
-              value: item.rtkCode
-            }));
-          }}
-        />
+        {/*<ProFormTreeSelect*/}
+        {/*  width='md'*/}
+        {/*  name='rtkCode'*/}
+        {/*  label='RTK'*/}
+        {/*  initialValue={data.rtkCode}*/}
+        {/*  request={async () => {*/}
+        {/*    const { code, data, msg } = await list();*/}
+        {/*    return data.map((item: any) => ({*/}
+        {/*      title: item.rtkCode,*/}
+        {/*      value: item.rtkCode*/}
+        {/*    }));*/}
+        {/*  }}*/}
+        {/*/>*/}
         <ProFormTextArea
-          label='备注'
+          label='机器人编号'
           name='remarks'
+          placeholder='请输入机器人编号'
+          rules={[{ required: true, message: '请输入机器人编号' }]}
           width={680}
           allowClear
           initialValue={data.remarks}
