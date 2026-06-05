@@ -446,8 +446,9 @@ export default function ExecuteWork() {
         //刷新页面
         call()
       } else if (data.commandCode === 133) {
-        const value = +data.voltage - 9 > 0 ? +data.voltage - 9 : 0
-        setVlotage(`${Math.floor(value / 3.8 * 100)} %`);
+        // const value = +data.voltage - 9 > 0 ? +data.voltage - 9 : 0
+        // setVlotage(`${Math.floor(value / 3.8 * 100)} %`);
+        setVlotage(`${data.voltage}V`);
       } else if (data.commandCode === 135) {
         mapRef.current?.initRobot(data)
       } else if (data.commandCode === 10) {
