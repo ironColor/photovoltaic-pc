@@ -649,9 +649,9 @@ export default function AddWorkOrder( ) {
                 rowKey='sort'
                 dragSortKey='sort'
                 onDragSortEnd={handleDragSortEnd}
-                style={{ width: '90%', maxHeight: 200 }}
+                style={{ width: '90%' }}
                 pagination={false}
-                scroll={{ y: 200 }}
+                scroll={{ y: 180 }}
                 size="small"
                 options={{
                   fullScreen: false,
