@@ -37,3 +37,10 @@ export const specialTree = async () => {
     method: 'GET'
   });
 };
+
+export const parameterPage = async (params: object) => {
+  return request<API.R<any>>('/parameter/page', {
+    params,
+    method: 'GET'
+  });
+};

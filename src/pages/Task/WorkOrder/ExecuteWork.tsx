@@ -779,7 +779,7 @@ export default function ExecuteWork() {
               启动
             </Button>
             <Button type='primary' danger onClick={() => commandStop(22)}  >
-              急停
+              中断
             </Button>
             <Button type='primary' danger onClick={cancel}>
               取消

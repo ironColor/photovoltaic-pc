@@ -18,11 +18,16 @@ type MapProps = {
 const POINT_TYPE_TAKEOFF = 10; // 起飞点
 const POINT_TYPE_MOUNT = 7;    // 挂载点
 const POINT_TYPE_UNLOAD = 8;   // 卸载点
+const ADJACENT_GRADIENT_COLOR = '#ff85c0';
+const SLOPE_TOO_LARGE_COLOR = 'red';
+const CLEANED_COLOR = 'green';
+const UNCLEANED_COLOR = 'grey';
 
 const legendItems = [
-  { color: 'grey', label: '未清洗' },
-  { color: 'green', label: '已清洗' },
-  { color: 'red', label: '坡度过大' }, // 如果有其他颜色也需要在这里定义
+  { color: UNCLEANED_COLOR, label: '未清洗' },
+  { color: CLEANED_COLOR, label: '已清洗' },
+  { color: SLOPE_TOO_LARGE_COLOR, label: '坡度过大' },
+  { color: ADJACENT_GRADIENT_COLOR, label: '相邻梯度过大' },
 ];
 
 function isWithinLastMonth(timeStr) {
@@ -37,6 +42,14 @@ function isWithinLastMonth(timeStr) {
 
   return time >= oneMonthAgo && time <= now;
 }
+
+const getLandFillColor = (land: any) => {
+  if (land.isAdjacentGradientTooLarge) return ADJACENT_GRADIENT_COLOR;
+  if (land.isSlopeTooLarge) return SLOPE_TOO_LARGE_COLOR;
+  return isWithinLastMonth(land.lastCleanTime) ? CLEANED_COLOR : UNCLEANED_COLOR;
+};
+
+const isDisabledLand = (land: any) => land.isSlopeTooLarge || land.isAdjacentGradientTooLarge;
 
 
 const Map: React.ForwardRefRenderFunction<
@@ -165,20 +178,22 @@ const Map: React.ForwardRefRenderFunction<
           const result = gcoord.transform([point.lon, point.lat], gcoord.WGS84, gcoord.GCJ02);
           return new AMap.current.LngLat(result[0], result[1]);
         });
+        const fillColor = getLandFillColor(item);
+        const disabledLand = isDisabledLand(item);
 
         const polygon = new AMap.current.Polygon({
           path: polygonPath,
           strokeOpacity: 0,
-          fillColor: item.isSlopeTooLarge ? 'red' : isWithinLastMonth(item.lastCleanTime) ? 'green' : 'grey',
-          cursor: item.isSlopeTooLarge ? '' : 'pointer',
-          clickable: true,
+          fillColor,
+          cursor: disabledLand ? '' : 'pointer',
+          clickable: !disabledLand,
           extData: {
-            preColor: item.isSlopeTooLarge ? 'red' : isWithinLastMonth(item.lastCleanTime) ? 'green' : 'grey'
+            preColor: fillColor
           }
         });
 
         polygon.on('click', () => {
-          if (!item.isSlopeTooLarge) {
+          if (!disabledLand) {
             props.onLandClick?.(item);
           }
         });
@@ -201,11 +216,11 @@ const Map: React.ForwardRefRenderFunction<
             textAlign: 'center',
           },
           zIndex: 200,
-          clickable: true
+          clickable: !disabledLand
         });
 
         text.on('click', () => {
-          if (!item.isSlopeTooLarge) {
+          if (!disabledLand) {
             props.onLandClick?.(item);
           }
         });

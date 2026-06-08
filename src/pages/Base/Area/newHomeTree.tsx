@@ -1,25 +1,58 @@
 import { Card, Tree, Empty } from 'antd';
 import React, { useEffect, useState } from 'react';
 import type { TreeProps } from 'antd';
-import { newTree, specialTree } from '@/pages/Base/service';
+import { newTree, parameterPage, specialTree } from '@/pages/Base/service';
 import { useLocation } from '@@/exports';
 
+const getParameterValue = (data: any) => {
+  const value = data?.records?.[0]?.parameterValue;
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : undefined;
+};
+
+const isOutOfRange = (value: any, limit?: number) => {
+  if (limit === undefined) return false;
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) && Math.abs(numericValue) > Math.abs(limit);
+};
+
 const TreeCard: React.FC<any> = ({ mapRef, onSelected, showSpecial }) => {
-  const [data, setData] = useState<[]>([]);
+  const [data, setData] = useState<any[]>([]);
   const location = useLocation();
 
   useEffect(() => {
+    const params = {
+      current: 1,
+      pageSize: 10
+    };
+
     if (showSpecial) {
       specialTree().then(res => {
         setData(res.data)
       })
     } else {
-    newTree().then(res => {
-        setData(res.data)
-    });
+      Promise.all([
+        newTree(),
+        parameterPage({ ...params, parameterCode: 'upperLeftSlope' }).catch(() => undefined),
+        parameterPage({ ...params, parameterCode: 'upperRightSlope' }).catch(() => undefined)
+      ]).then(([treeRes, upperLeftSlopeRes, upperRightSlopeRes]) => {
+        const upperLeftSlope = getParameterValue(upperLeftSlopeRes?.data);
+        const upperRightSlope = getParameterValue(upperRightSlopeRes?.data);
+        const treeData = treeRes.data?.map((area: any) => ({
+          ...area,
+          lands: area.lands?.map((land: any) => ({
+            ...land,
+            isAdjacentGradientTooLarge:
+              isOutOfRange(land.upperLeftEdgeDegrees, upperLeftSlope) ||
+              isOutOfRange(land.upperRightEdgeDegrees, upperRightSlope)
+          }))
+        }));
+
+        setData(treeData);
+      });
     }
 
-  }, []);
+  }, [showSpecial]);
 
   const loop = () =>
     data.map((item: any) => (

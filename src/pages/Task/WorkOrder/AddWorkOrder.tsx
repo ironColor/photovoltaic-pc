@@ -46,6 +46,18 @@ function formatTime(minutes: number) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+const getParameterValue = (data: any) => {
+  const value = data?.records?.[0]?.parameterValue;
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : undefined;
+};
+
+const isOutOfRange = (value: any, limit?: number) => {
+  if (limit === undefined) return false;
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) && Math.abs(numericValue) > Math.abs(limit);
+};
+
 export default function AddWorkOrder( ) {
   const mapRef = useRef<any>();
   const [, setComplete] = useState(false);
@@ -62,7 +74,9 @@ export default function AddWorkOrder( ) {
   const [groupOptions, setGroupOptions] = useState<any[]>([]);
   const [robotOptions, setRobotOptions] = useState<any[]>([]);
   const [, setRobotsId] = useState<any[]>([]);
-  const [k, setK] = useState();
+  const [k, setK] = useState<number>();
+  const [upperLeftSlope, setUpperLeftSlope] = useState<number>();
+  const [upperRightSlope, setUpperRightSlope] = useState<number>();
   const useWatch = Form.useWatch;
   const orderType = useWatch('orderType', form);
   const [landName, setLandName] = useState('');
@@ -247,7 +261,28 @@ export default function AddWorkOrder( ) {
   }, [landData, mapRef])
 
   const isSlopeTooLarge = (record: any) => {
-    return Math.abs(record.k) > Number(k);
+    return isOutOfRange(record.k, k);
+  };
+
+  const isAdjacentGradientTooLarge = (record: any) => {
+    return (
+      isOutOfRange(record.upperLeftEdgeDegrees, upperLeftSlope) ||
+      isOutOfRange(record.upperRightEdgeDegrees, upperRightSlope)
+    );
+  };
+
+  const isDisabledLand = (record: any) => {
+    return isSlopeTooLarge(record) || isAdjacentGradientTooLarge(record);
+  };
+
+  const getLandRowClassName = (record: any) => {
+    if (isAdjacentGradientTooLarge(record)) return 'row-adjacent-gradient-too-large';
+    if (isSlopeTooLarge(record)) return 'row-slope-too-large';
+    return '';
+  };
+
+  const getSelectableLands = (records: any[]) => {
+    return records.filter(record => !isDisabledLand(record));
   };
 
   const handleDragSortEnd = (_: number, __: number, newDataSource: any) => {
@@ -274,15 +309,18 @@ export default function AddWorkOrder( ) {
   }
 
   useEffect(() => {
-    if (all.length > 0 && k) {
-      mapRef.current.initLand(all.map(item => ({
+    if (all.length > 0 && k !== undefined) {
+      mapRef.current?.initLand(all.map(item => ({
         ...item,
-        isSlopeTooLarge: isSlopeTooLarge(item)
+        isSlopeTooLarge: isSlopeTooLarge(item),
+        isAdjacentGradientTooLarge: isAdjacentGradientTooLarge(item)
       })));
     }
-  }, [all, k]);
+  }, [all, k, upperLeftSlope, upperRightSlope]);
 
   const handleLandClick = (land: any) => {
+    if (isDisabledLand(land)) return;
+
     console.log('用户点击了地块:', land.landName, land.landId);
     
     setLandData(prev => {
@@ -337,6 +375,12 @@ export default function AddWorkOrder( ) {
   }, []);
 
   const onFinish = async (value: any) => {
+    const disabledLands = landData.filter(isDisabledLand);
+    if (disabledLands.length > 0) {
+      message.error('存在不可选择的组串，请移除后再提交');
+      return;
+    }
+
     const orderId = searchParams.get('orderId');
 
     if(orderId) {
@@ -432,27 +476,37 @@ export default function AddWorkOrder( ) {
 
     fetchData();
 
-    getParameter({
-      current: 1,
-      pageSize: 10,
-      parameterCode: 'slope'
-    }).then(res => {
-      const { code, msg, data } = res;
-      if (code !== 0) {
-        message.error(msg || '获取斜率失败');
-        return;
-      } else {
-        const { records } = data
-        setK(records[0].parameterValue)
-      }
-    })
+    const loadParameter = (
+      parameterCode: string,
+      setValue: (value?: number) => void,
+      errorMessage: string
+    ) => {
+      getParameter({
+        current: 1,
+        pageSize: 10,
+        parameterCode
+      }).then(res => {
+        const { code, msg, data } = res;
+        if (code !== 0) {
+          message.error(msg || errorMessage);
+          return;
+        }
+        setValue(getParameterValue(data));
+      }).catch(() => {
+        message.error(errorMessage);
+      });
+    };
+
+    loadParameter('slope', setK, '获取斜率失败');
+    loadParameter('upperLeftSlope', setUpperLeftSlope, '获取左侧相邻斜率失败');
+    loadParameter('upperRightSlope', setUpperRightSlope, '获取右侧相邻斜率失败');
 
 
   }, []);
   // 高亮地图上的地块
   useEffect(() => {
     // 斜率只能通过接口获取
-    if (landData.length > 0 && all.length > 0 && k) {
+    if (landData.length > 0 && all.length > 0 && k !== undefined) {
       requestAnimationFrame(() => {
         mapRef.current?.highlightLandsByIds(landData.map(item => item.landId?.toString()));
       })
@@ -759,9 +813,7 @@ export default function AddWorkOrder( ) {
               headerTitle={<b>组串列表</b>}
               params={{}}
               cardBordered={true}
-              rowClassName={(record) =>
-                isSlopeTooLarge(record) ? 'row-slope-too-large' : ''
-              }
+              rowClassName={getLandRowClassName}
               request={async params => {
                 if (params.current !== page) {
                   setPage(params.current)
@@ -796,14 +848,15 @@ export default function AddWorkOrder( ) {
                     });
                     // 2. 添加当前页中新选中的项
                     rows.forEach(row => {
+                      if (isDisabledLand(row)) return;
                         newMap[row.landId] = row;
                     });
                     setSelectedRecordsMap(newMap);
-                    setSelect(Object.values(newMap));
+                    setSelect(getSelectableLands(Object.values(newMap)));
                 },
                 selections: [Table.SELECTION_INVERT],
                 getCheckboxProps: (record) => ({
-                  disabled: isSlopeTooLarge(record)
+                  disabled: isDisabledLand(record)
                 })
               }}
               tableAlertRender={({ selectedRowKeys, onCleanSelected }) => {
@@ -813,7 +866,7 @@ export default function AddWorkOrder( ) {
                   已选 {selectedRowKeys.length} 项
 
                   <Button type="primary" style={{ marginInlineStart: 8 }} onClick={() => {
-                      const newLandData = Object.values(selectedRecordsMap).map((item, index) => ({ ...item, sort: index})); // 使用全局选中数据
+                      const newLandData = getSelectableLands(Object.values(selectedRecordsMap)).map((item, index) => ({ ...item, sort: index})); // 使用全局选中数据
                       
                       // 找出被取消勾选的地块
                       const removedLands = landData.filter(item => !selectedRecordsMap[item.landId]);
