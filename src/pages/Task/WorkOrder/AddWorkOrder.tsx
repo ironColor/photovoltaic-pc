@@ -30,6 +30,8 @@ import {
   tree,
   updateInfo
 } from '@/pages/Task/WorkOrder/service';
+import { getParameterValue } from '@/utils/parameterValue';
+import { isAdjacentGradientTooLarge as isAdjacentGradientValueTooLarge } from '@/utils/gradientLimit';
 
 function isArray(value: any) {
   return Array.isArray(value);
@@ -45,12 +47,6 @@ function formatTime(minutes: number) {
 
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
-
-const getParameterValue = (data: any) => {
-  const value = data?.records?.[0]?.parameterValue;
-  const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? numericValue : undefined;
-};
 
 const isOutOfRange = (value: any, limit?: number) => {
   if (limit === undefined) return false;
@@ -261,13 +257,14 @@ export default function AddWorkOrder( ) {
   }, [landData, mapRef])
 
   const isSlopeTooLarge = (record: any) => {
+    console.log(11112, record.k, k);
     return isOutOfRange(record.k, k);
   };
 
   const isAdjacentGradientTooLarge = (record: any) => {
     return (
-      isOutOfRange(record.upperLeftEdgeDegrees, upperLeftSlope) ||
-      isOutOfRange(record.upperRightEdgeDegrees, upperRightSlope)
+      isAdjacentGradientValueTooLarge(record.upperLeftEdgeDegrees, upperLeftSlope) ||
+      isAdjacentGradientValueTooLarge(record.upperRightEdgeDegrees, upperRightSlope)
     );
   };
 
@@ -491,7 +488,7 @@ export default function AddWorkOrder( ) {
           message.error(msg || errorMessage);
           return;
         }
-        setValue(getParameterValue(data));
+        setValue(getParameterValue(data, parameterCode));
       }).catch(() => {
         message.error(errorMessage);
       });

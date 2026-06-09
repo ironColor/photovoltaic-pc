@@ -3,18 +3,8 @@ import React, { useEffect, useState } from 'react';
 import type { TreeProps } from 'antd';
 import { newTree, parameterPage, specialTree } from '@/pages/Base/service';
 import { useLocation } from '@@/exports';
-
-const getParameterValue = (data: any) => {
-  const value = data?.records?.[0]?.parameterValue;
-  const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? numericValue : undefined;
-};
-
-const isOutOfRange = (value: any, limit?: number) => {
-  if (limit === undefined) return false;
-  const numericValue = Number(value);
-  return Number.isFinite(numericValue) && Math.abs(numericValue) > Math.abs(limit);
-};
+import { getParameterValue } from '@/utils/parameterValue';
+import { isAdjacentGradientTooLarge } from '@/utils/gradientLimit';
 
 const TreeCard: React.FC<any> = ({ mapRef, onSelected, showSpecial }) => {
   const [data, setData] = useState<any[]>([]);
@@ -36,15 +26,15 @@ const TreeCard: React.FC<any> = ({ mapRef, onSelected, showSpecial }) => {
         parameterPage({ ...params, parameterCode: 'upperLeftSlope' }).catch(() => undefined),
         parameterPage({ ...params, parameterCode: 'upperRightSlope' }).catch(() => undefined)
       ]).then(([treeRes, upperLeftSlopeRes, upperRightSlopeRes]) => {
-        const upperLeftSlope = getParameterValue(upperLeftSlopeRes?.data);
-        const upperRightSlope = getParameterValue(upperRightSlopeRes?.data);
+        const upperLeftSlope = getParameterValue(upperLeftSlopeRes?.data, 'upperLeftSlope');
+        const upperRightSlope = getParameterValue(upperRightSlopeRes?.data, 'upperRightSlope');
         const treeData = treeRes.data?.map((area: any) => ({
           ...area,
           lands: area.lands?.map((land: any) => ({
             ...land,
             isAdjacentGradientTooLarge:
-              isOutOfRange(land.upperLeftEdgeDegrees, upperLeftSlope) ||
-              isOutOfRange(land.upperRightEdgeDegrees, upperRightSlope)
+              isAdjacentGradientTooLarge(land.upperLeftEdgeDegrees, upperLeftSlope) ||
+              isAdjacentGradientTooLarge(land.upperRightEdgeDegrees, upperRightSlope)
           }))
         }));
 
