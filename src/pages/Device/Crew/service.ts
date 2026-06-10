@@ -15,9 +15,8 @@ export const saveInfo = async (params: object) => {
 };
 
 
-export const robotPage = async (params: object) => {
-  return request<API.R<any>>('/ppc/ppcRobot/page', {
-    params,
+export const robotList = async () => {
+  return request<API.R<any>>('/ppc/ppcRobot/list', {
     method: 'GET'
   });
 };

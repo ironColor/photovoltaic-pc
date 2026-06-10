@@ -1,6 +1,6 @@
 import { Button, Divider, Form, Input, message, Modal, Popconfirm, Select, Space, Table } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
-import { delGroup, detailInfo, page, robotPage, saveInfo, update } from '@/pages/Device/Crew/service';
+import { delGroup, detailInfo, page, robotList, saveInfo, update } from '@/pages/Device/Crew/service';
 import { ProColumns, ProTable } from '@ant-design/pro-components';
 import { PlusOutlined } from '@ant-design/icons';
 
@@ -9,8 +9,6 @@ export default function Crew() {
   const [ list, setList] = useState<any[]>([
   ]);
   const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true); // 是否还有更多数据
   const [open, setOpen] = useState(false);
   const tableFormRef = useRef<any>();
   const [updateId, setUpdateId] = useState<null | number>();
@@ -92,43 +90,23 @@ export default function Crew() {
     }
   ];
 
-  const loadData = async (pages: any) => {
-    if (loading || !hasMore) return;
+  const loadData = async () => {
+    if (loading) return;
     setLoading(true);
     try {
-      const info = await robotPage({current: pages, pageSize: 10});
-      const {
-        data: { records, total },
-      } = info;
+      const { data = [] } = await robotList();
 
-      const format = records.map((record: any) => ({
+      const format = data.map((record: any) => ({
         ...record,
         label: record.robotCode,
         value: record.robotId,
       }));
 
-      setList((pre) => [...pre, ...format]);
-      setCurrentPage(pages);
-
-      // 判断是否还有更多数据
-      if (pages * 10 >= total) {
-        setHasMore(false);
-      }
+      setList(format);
     } catch (error) {
       console.error('加载失败:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  // 监听下拉滚动
-  const handlePopupScroll = (e: any) => {
-    const { target } = e;
-    // 判断是否滚动到底部（允许一点误差）
-    if (target.scrollHeight - target.scrollTop <= target.clientHeight + 10) {
-      if (hasMore && !loading) {
-        loadData(currentPage + 1);
-      }
     }
   };
 
@@ -148,7 +126,7 @@ export default function Crew() {
 
   useEffect(() => {
     // form.setFieldsValue({ robotList: list });
-    loadData(1)
+    loadData()
   }, []);
 
   return (
@@ -276,7 +254,6 @@ export default function Crew() {
             <Select
               mode='multiple'
               options={list}
-              onPopupScroll={handlePopupScroll}
               loading={loading}
               showSearch={false}
               placeholder='请选择机器人'
