@@ -42,6 +42,7 @@ import close from '/public/picture/close.png'
 import Block from '@/pages/Task/Monitor/components/Block';
 import Display from '@/pages/Task/Monitor/components/Display';
 import style from './excute.less';
+import { getCancelableSubTaskIds } from './executeWorkUtils';
 
 
 function mergeData(data) {
@@ -498,6 +499,18 @@ export default function ExecuteWork() {
     message.success('消息已发出');
   }, [mapRef.current, selectedRowKeys, dataArr]);
 
+  const returnHome = useCallback(async () => {
+    const orderId = searchParams.get('id');
+
+    const { code, msg } = await commandApi({ commandCode: 18, workOrderId: Number(orderId) });
+    if (code !== 0) {
+      message.error(msg || '执行失败');
+      return null;
+    }
+    call();
+    message.success('消息已发出');
+  }, [searchParams, call]);
+
   const mapCommand = useCallback(async (c: number) => {
     const orderId = searchParams.get('id');
 
@@ -572,6 +585,34 @@ export default function ExecuteWork() {
     message.success('消息已发出');
   }, [mapRef.current, selectedRowKeys, dataArr]);
 
+  const cancelExecution = useCallback(async () => {
+    const orderId = searchParams.get('id');
+
+    if (selectedRowKeys.length === 0) {
+      message.error('请选择要取消执行的工单');
+      return null;
+    }
+
+    const subTaskIds = getCancelableSubTaskIds(dataArr, selectedRowKeys);
+
+    if (subTaskIds.length === 0) {
+      message.error('只有待执行、中断状态的投放任务才可以进行取消');
+      return null;
+    }
+
+    const { code, msg } = await commandApi({
+      commandCode: 240,
+      workOrderId: Number(orderId),
+      subTaskIds: subTaskIds.join(',')
+    });
+    if (code !== 0) {
+      message.error(msg || '执行失败');
+      return null;
+    }
+    call();
+    message.success('消息已发出');
+  }, [searchParams, selectedRowKeys, dataArr, call]);
+
 
 
   const speak = (text: any) => {
@@ -584,11 +625,11 @@ export default function ExecuteWork() {
   };
 
   /**
-   * 取消任务
+   * 重置任务
    */
   const cancel = useCallback(async () => {
     Modal.confirm({
-      title: '确定要取消当前任务吗？',
+      title: '确定要重置当前任务吗？',
       icon: <ExclamationCircleFilled />,
       onOk() {
         commandCancel(24);
@@ -781,8 +822,14 @@ export default function ExecuteWork() {
             <Button type='primary' danger onClick={() => commandStop(22)}  >
               中断
             </Button>
-            <Button type='primary' danger onClick={cancel}>
+            <Button type='primary' danger onClick={returnHome}>
+              返航
+            </Button>
+            <Button type='primary' danger onClick={cancelExecution}>
               取消
+            </Button>
+            <Button type='primary' danger onClick={cancel}>
+              重置
             </Button>
             <Button onClick={() => history.push({ pathname: '/task/workMonitor/list'})}>返回</Button>
           </Space>
