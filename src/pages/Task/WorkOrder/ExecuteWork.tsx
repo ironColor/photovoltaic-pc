@@ -42,7 +42,7 @@ import close from '/public/picture/close.png'
 import Block from '@/pages/Task/Monitor/components/Block';
 import Display from '@/pages/Task/Monitor/components/Display';
 import style from './excute.less';
-import { getCancelableSubTaskIds } from './executeWorkUtils';
+import { canSelectFailureType, getCancelableSubTaskIds } from './executeWorkUtils';
 
 
 function mergeData(data) {
@@ -288,7 +288,7 @@ export default function ExecuteWork() {
       key: 'errorCode',
       align: 'center',
       render: (_, record) => {
-        if (record.execStatus === '执行中' ||( record.execStatus === '已完成' && record.countDownTime)) {
+        if (canSelectFailureType(record)) {
           return (
             <Select
               style={{ width: '200px' }}
