@@ -32,6 +32,11 @@ import {
 } from '@/pages/Task/WorkOrder/service';
 import { getParameterValue } from '@/utils/parameterValue';
 import { isAdjacentGradientTooLarge as isAdjacentGradientValueTooLarge } from '@/utils/gradientLimit';
+import {
+  DRY_CLEAN_ORDER_TYPE,
+  getOrderTypeOptions,
+  isOrderTypeSelectDisabled
+} from '@/pages/Task/WorkOrder/addWorkOrderUtils';
 
 function isArray(value: any) {
   return Array.isArray(value);
@@ -63,6 +68,7 @@ export default function AddWorkOrder( ) {
   const [landData, setLandData] = useState<any[]>([]);
   const [landOptions, setLandOptions] = useState<any[]>([])
   const [searchParams] = useSearchParams();
+  const orderId = searchParams.get('orderId');
   const [landId, setLandId] = useState<string>();
   const [start, setStart] = useState<any[]>([]);
   const [pull, setPull] = useState<any[]>([]);
@@ -378,10 +384,8 @@ export default function AddWorkOrder( ) {
       return;
     }
 
-    const orderId = searchParams.get('orderId');
-
     if(orderId) {
-      updateInfo({...value, landIds: value.landIds.map((item: any) => item.landId), orderId }).then(res => {
+      updateInfo({...value, orderType: DRY_CLEAN_ORDER_TYPE, landIds: value.landIds.map((item: any) => item.landId), orderId }).then(res => {
         const { code, msg } = res;
         if (code !== 0) {
           message.error(msg || '创建失败');
@@ -393,7 +397,7 @@ export default function AddWorkOrder( ) {
         }
       })
     } else {
-      saveInfo({ ...value, robotIds: form.getFieldValue('robotIds'), landIds: value.landIds.map((item: any) => item.landId) }).then(res => {
+      saveInfo({ ...value, orderType: DRY_CLEAN_ORDER_TYPE, robotIds: form.getFieldValue('robotIds'), landIds: value.landIds.map((item: any) => item.landId) }).then(res => {
         const { code, msg } = res;
         if (code !== 0) {
           message.error(msg || '创建失败');
@@ -426,7 +430,6 @@ export default function AddWorkOrder( ) {
         setLandOptions(options);
 
         // 第二步：如果有 orderId，再获取工单详情
-        const orderId = searchParams.get('orderId');
         if (!orderId) return;
 
         const detailRes = await detailInfo(+orderId);
@@ -441,7 +444,7 @@ export default function AddWorkOrder( ) {
         form.setFieldsValue({
           areaId: detailData.areaId,
           orderName: detailData.orderName,
-          orderType: detailData.orderType,
+          orderType: DRY_CLEAN_ORDER_TYPE,
           landIds: detailData.landIds || [],
           takeoffPointId: detailData.takeoffPointId,
           mountPointId: detailData.mountPointId,
@@ -641,13 +644,14 @@ export default function AddWorkOrder( ) {
       </Col>
       <Col flex='auto'>
         <div style={{ padding: '24px'}}>
-          <h1>{!!searchParams.get('orderId') ? '修改工单' : '新增工单'}</h1>
+          <h1>{orderId ? '修改工单' : '新增工单'}</h1>
           <Form
             labelCol={{ span: 8 }}
             wrapperCol={{ span: 16 }}
             style={{ maxWidth: 600 }}
             form={form}
             onFinish={onFinish}
+            initialValues={{ orderType: DRY_CLEAN_ORDER_TYPE }}
           >
             <Form.Item label='场地名称' rules={[{ required: true, message: '请选择场地名称' }]} name="areaId">
               <Select
@@ -659,16 +663,8 @@ export default function AddWorkOrder( ) {
             </Form.Item>
             <Form.Item label='工单类型' rules={[{ required: true, message: '请选择工单类型' }]} name="orderType">
               <Select
-                options={[
-                  {
-                    label: '干洗',
-                    value: 1
-                  },
-                  {
-                    label: '水洗',
-                    value: 2
-                  }
-                ]}
+                options={getOrderTypeOptions()}
+                disabled={isOrderTypeSelectDisabled()}
                 showSearch={false}
                 placeholder="请选择工单类型"
               />
